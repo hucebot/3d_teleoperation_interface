@@ -1,0 +1,9 @@
+{
+    "ros.distro": "rolling",
+    "python.autoComplete.extraPaths": [
+        "/home/cdonoso/ros2_ws/install/teleoperation_interface/lib/python3.10/site-packages",
+        "/home/cdonoso/ros2_ws/install/ros2_streamer/lib/python3.10/site-packages",
+        "/home/cdonoso/ros2_ws/install/humanoid_control/lib/python3.10/site-packages",
+        "/opt/ros/rolling/lib/python3.12/site-packages"
+    ]
+}
