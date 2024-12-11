@@ -61,6 +61,13 @@ class MainWindow(Qt3DExtras.Qt3DWindow):
 
         # Set the root entity
         self.setRootEntity(self.root_entity)
+        #self.camera_controller()
+
+    def camera_controller(self):
+        self.camController = Qt3DExtras.QOrbitCameraController(self.root_entity)
+        self.camController.setLinearSpeed(50)
+        self.camController.setLookSpeed(180)
+        self.camController.setCamera(self.camera())
 
     def update_video_texture(self):
         # Capture frame from webcam
@@ -70,7 +77,8 @@ class MainWindow(Qt3DExtras.Qt3DWindow):
             return
 
         # Convert frame to RGB
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.rotate(frame, cv2.ROTATE_180)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2BGRA)
 
         # Save the frame as an image with a unique name
         unique_id = uuid.uuid4().hex
