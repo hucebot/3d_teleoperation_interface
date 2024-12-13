@@ -1,1 +1,1 @@
-docker build -t ros2_teleop_interface -f devel.Dockerfile .
+docker build -t ros2_3d_interface -f devel.Dockerfile .

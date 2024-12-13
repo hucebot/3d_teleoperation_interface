@@ -24,7 +24,13 @@ RUN pip install\
     opencv-contrib-python \
     pyserial \
     scipy \
-    pyside6 
+    pyside6 \
+    pyglet \
+    moderngl \
+    moderngl-window \
+    glfw \
+    pillow \
+    pygame
 
 
 RUN pip install --upgrade numpy==1.23.5
@@ -33,7 +39,15 @@ RUN pip install --upgrade numpy==1.23.5
 RUN apt install -y \
     ros-${ROS_DISTRO}-cv-bridge \
     ros-${ROS_DISTRO}-rviz2 \
-    ros-${ROS_DISTRO}-rviz-imu-plugin
+    ros-${ROS_DISTRO}-rviz-imu-plugin \
+    ros-${ROS_DISTRO}-librealsense2*
+
+####### Install ROS2 Realsense
+RUN mkdir -p /ros2_ws/src
+WORKDIR /ros2_ws/src
+RUN git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-master
+WORKDIR /ros2_ws
+RUN rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y
 
 ###### Install Dependencies
 RUN  apt install -y \
@@ -49,4 +63,5 @@ RUN  apt install -y \
     terminator \
     libx11-xcb1 libxcb-util1 libxcb-render0 libxcb-shape0 \
     libxcb-xfixes0 libxcb-keysyms1 libxcb-image0 libxcb-randr0 \
-    libxcb-xtest0 libxcb-cursor0 xvfb
+    libxcb-xtest0 libxcb-cursor0 xvfb \
+    python3-rosdep

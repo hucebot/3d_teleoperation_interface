@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'teleoperation_interface'
+package_name = 'ros2_3d_interface'
 
 setup(
     name=package_name,
@@ -20,10 +20,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'camera_node = teleoperation_interface.camera_publisher:main',
-            'display_information  = teleoperation_interface.display_information:main',
-            'imu_node = teleoperation_interface.imu_publisher:main',
-            'random_markers = teleoperation_interface.random_markers:main'
+            '3d_interface = ros2_3d_interface.3d_interface:main',
+            '3d_recorder = ros2_3d_interface.record_pcl:main',
         ],
     },
 )
