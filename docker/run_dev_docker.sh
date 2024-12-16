@@ -6,7 +6,10 @@ if [ $isRunning -eq 0 ]; then
     docker rm ros2_3d_interface
     docker run  \
         --name ros2_3d_interface  \
+        --gpus all \
         -e DISPLAY=$DISPLAY \
+        -e NVIDIA_DRIVER_CAPABILITIES=all \
+        -e XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
         --env QT_X11_NO_MITSHM=1 \
         --net host \

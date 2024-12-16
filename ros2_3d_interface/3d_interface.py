@@ -1,208 +1,164 @@
 import os
-import sys
-import glm
 import moderngl
 import numpy as np
-import pygame
+import pyglet
 import rclpy
 from rclpy.node import Node
 
-from ros2_3d_interface.utilities.LineGeometry import LineGeometry
-from ros2_3d_interface.utilities.Mesh import Mesh
+from ros2_3d_interface.utilities.camera import Camera
+from ros2_3d_interface.utilities.viewer import Viewer
+from ros2_3d_interface.utilities.shape import (
+    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeQuadTexture
+)
+from ros2_3d_interface.utilities.utils import (
+    RotIdentity
+)
 
+class PointCloudViewerNode(Node):
+    def __init__(self, screen_width=1800, screen_height=1200, fps=5.5):
+        super().__init__('pointcloud_viewer_node')
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        self.fps = fps
 
-os.environ['SDL_WINDOWS_DPI_AWARENESS'] = 'permonitorv2'
+        # Initialize camera and viewer
+        self.cam = Camera()
+        self.cam.setParams(45.0, (0, 0, self.screen_width, self.screen_height))
+        self.cam.setTargetPos([5.0, 0.0, 0.0])
+        self.cam.setEyePos([-10.0, -10.0, 5.0])
+        self.viewer = Viewer(self.screen_width, self.screen_height, self.cam)
 
-pygame.init()
-pygame.display.set_mode((800, 800), flags=pygame.OPENGL | pygame.DOUBLEBUF, vsync=True)
+        # Initialize OpenGL context
+        self.ctx = moderngl.create_context()
+        self.ctx.enable(moderngl.BLEND | moderngl.DEPTH_TEST)
+        self.ctx.enable(moderngl.PROGRAM_POINT_SIZE)
 
+        # Initialize drawing primitives
+        self.grid = ShapeGrid(self.ctx)
+        self.frame = ShapeFrame(self.ctx)
+        self.pyramid = ShapePyramid(self.ctx)
+        self.cloud = None
+        self.quad = None
 
-class PointCloudGeometry:
-    def __init__(self, ctx, file_path):
-        self.ctx = ctx
+        # Load data placeholders
+        self.array_frames_rgb = None
+        self.array_frames_xyz = None
+        self.size_batch = 0
+        self.frame_width = 0
+        self.frame_height = 0
+        self.frame_aspect = 0
+        self.size_points = 0
 
-        # Load point cloud data from .ply file
-        vertices = self.load_ply(file_path)
-        self.vertex_count = len(vertices) // 3
+        # Frame indices
+        self.index_frame = 0
+        self.index_iterations = 0
 
-        # Create buffer for point cloud
-        self.vbo = self.ctx.buffer(vertices.astype('f4').tobytes())
+    def load_data(self, path_file, name_dataset_rgb='color', name_dataset_xyz='xyz'):
+        with np.load(path_file, allow_pickle=True) as f:
+            if name_dataset_rgb in f:
+                self.array_frames_rgb = f[name_dataset_rgb][()]
+                assert len(self.array_frames_rgb.shape) == 4 and self.array_frames_rgb.shape[3] == 3
+                self.get_logger().info(f"Loaded color image: {name_dataset_rgb}, {self.array_frames_rgb.shape}")
 
-    def load_ply(self, file_path):
-        try:
-            with open(file_path, 'r') as f:
-                lines = f.readlines()
+            if name_dataset_xyz in f:
+                self.array_frames_xyz = f[name_dataset_xyz][()]
+                assert len(self.array_frames_xyz.shape) == 4 and self.array_frames_xyz.shape[3] == 3
+                self.get_logger().info(f"Loaded point cloud: {name_dataset_xyz}, {self.array_frames_xyz.shape}")
 
-            # Find vertex data start
-            header_ended = False
-            vertex_data = []
-            for line in lines:
-                if header_ended:
-                    vertex_data.append(list(map(float, line.split()[:3])))
-                elif line.startswith("end_header"):
-                    header_ended = True
+        if self.array_frames_rgb is None and self.array_frames_xyz is None:
+            self.get_logger().error("No dataset loaded")
+            raise ValueError("No dataset loaded")
 
-            # Flatten list of vertex positions
-            return np.array(vertex_data).flatten()
-        except Exception as e:
-            print(f"Error loading point cloud: {e}")
-            sys.exit(1)
+        # Retrieve image sizes
+        if self.array_frames_rgb is not None:
+            self.size_batch = self.array_frames_rgb.shape[0]
+            self.frame_width = self.array_frames_rgb.shape[2]
+            self.frame_height = self.array_frames_rgb.shape[1]
 
-    def vertex_array(self, program):
-        return self.ctx.vertex_array(program, [(self.vbo, '3f', 'in_vertex')])
+        if self.array_frames_xyz is not None:
+            self.size_batch = self.array_frames_xyz.shape[0]
+            self.frame_width = self.array_frames_xyz.shape[2]
+            self.frame_height = self.array_frames_xyz.shape[1]
 
+        if self.array_frames_rgb is not None and self.array_frames_xyz is not None:
+            assert self.array_frames_rgb.shape == self.array_frames_xyz.shape
 
-class PointCloudMesh:
-    def __init__(self, program, geometry):
-        self.ctx = moderngl.get_context()
-        self.vao = geometry.vertex_array(program)
+        self.frame_aspect = self.frame_width / self.frame_height
+        self.size_points = self.frame_width * self.frame_height
 
-    def render(self):
-        self.vao.render(moderngl.POINTS)
+        self.get_logger().info(f"Loaded frames: {self.size_batch}")
+        self.get_logger().info(f"Frames shape: {self.frame_width}x{self.frame_height}")
 
+        # Initialize shapes
+        self.cloud = ShapePointCloud(self.ctx, self.size_points)
+        self.quad = ShapeQuadTexture(self.ctx, self.frame_width, self.frame_height)
 
-class Scene:
-    def __init__(self):
-        self.ctx = moderngl.get_context()
+    def update(self, dt):
+        self.index_iterations += 1
+        self.viewer.update(dt)
 
-        self.program = self.ctx.program(
-            vertex_shader='''
-                #version 330 core
+        # Update frame index based on FPS
+        if self.index_iterations % int(self.fps) == 0:
+            self.index_frame += 1
+            if self.index_frame >= self.size_batch:
+                self.index_frame = 0
 
-                uniform mat4 camera;
+        # Update cloud points and texture
+        if self.array_frames_xyz is not None:
+            self.cloud.update_points(array_xyz=self.array_frames_xyz[self.index_frame])
 
-                layout (location = 0) in vec3 in_vertex;
-                layout (location = 1) in vec3 in_color;
+        if self.array_frames_rgb is not None:
+            self.cloud.update_points(array_rgb=self.array_frames_rgb[self.index_frame])
+            self.quad.update_texture(self.array_frames_rgb[self.index_frame])
 
-                out vec3 frag_color;
+        # Clear and render
+        self.ctx.screen.use()
+        self.ctx.clear(0.3, 0.3, 0.3)
 
-                void main() {
-                    frag_color = in_color;
-                    gl_Position = camera * vec4(in_vertex, 1.0);
-                }
-            ''',
-            fragment_shader='''
-                #version 330 core
-
-                in vec3 frag_color;
-
-                layout (location = 0) out vec4 out_color;
-
-                void main() {
-                    out_color = vec4(frag_color, 1.0);
-                }
-            ''',
+        self.grid.render(self.cam)
+        self.frame.render(
+            self.cam,
+            pos=[0.0, 0.0, 0.0],
+            rot=RotIdentity(),
+            scale=1.0
         )
 
-        self.line_geometry = LineGeometry()
-        self.lines = Mesh(self.program, self.line_geometry)
+        far = 5.0
+        fovx = 60.0
+        if self.array_frames_xyz is not None:
+            self.cloud.render(
+                self.cam,
+                pos=[0.0, 0.0, 1.0],
+                rot=RotIdentity(),
+                scale=10.0
+            )
 
-        # Load point cloud
-        pointcloud_path = '/ros2_ws/src/ros2_3d_interface/pointcloud/pointcloud_20241212_164843.ply'
-        self.pointcloud_geometry = PointCloudGeometry(self.ctx, pointcloud_path)
-        self.pointcloud = PointCloudMesh(self.program, self.pointcloud_geometry)
+        if self.array_frames_rgb is not None:
+            self.pyramid.render(
+                self.cam,
+                pos=[0.0, 0.0, 0.0],
+                rot=RotIdentity(),
+                fovx=fovx,
+                aspect=self.frame_aspect,
+                far=far,
+                color=[1.0, 1.0, 1.0, 1.0]
+            )
 
-        # Camera settings
-        self.camera_distance = 3.0
-        self.camera_yaw = 0.0
-        self.camera_pitch = 0.0
-        self.mouse_dragging = False  # Flag to track mouse dragging
+    def run(self):
+        pyglet.clock.schedule_interval(self.update, 1 / 60.0)
+        pyglet.app.run()
 
-    def camera_matrix(self):
-        # Convert spherical coordinates to Cartesian for camera position
-        x = self.camera_distance * glm.cos(glm.radians(self.camera_yaw)) * glm.cos(glm.radians(self.camera_pitch))
-        y = self.camera_distance * glm.sin(glm.radians(self.camera_yaw)) * glm.cos(glm.radians(self.camera_pitch))
-        z = self.camera_distance * glm.sin(glm.radians(self.camera_pitch))
-
-        eye = (x, y, z)  # Camera position
-        center = (0.0, 0.0, 0.0)  # Looking at the origin
-        up = (0.0, 0.0, 1.0)  # Up direction
-        proj = glm.perspective(glm.radians(45.0), 1.0, 0.1, 1000.0)  # Perspective projection
-        look = glm.lookAt(eye, center, up)  # View matrix
-        return proj * look
-
-    def render(self):
-        camera = self.camera_matrix()
-
-        # Set background color to grey
-        self.ctx.clear(0.5, 0.5, 0.5, 1.0)
-        self.ctx.enable(self.ctx.DEPTH_TEST)
-
-        self.program['camera'].write(camera)
-
-        # Render axes
-        self.lines.render()
-
-        # Render point cloud
-        self.pointcloud.render()
-
-    def handle_mouse_motion(self, rel):
-        # Update yaw and pitch based on mouse movement
-        sensitivity = 0.2
-        self.camera_yaw += rel[0] * sensitivity
-        self.camera_pitch -= rel[1] * sensitivity
-        self.camera_pitch = max(-89.99, min(89.99, self.camera_pitch))  # Limit pitch to avoid gimbal lock
-
-    def handle_mouse_wheel(self, y_offset):
-        # Adjust the camera distance (zoom) based on the mouse wheel
-        zoom_sensitivity = 0.5
-        self.camera_distance -= y_offset * zoom_sensitivity
-        self.camera_distance = max(0.0, min(10.0, self.camera_distance))  # Limit zoom range
-
-    def start_drag(self):
-        # Reset mouse relative movement at the start of dragging
-        pygame.mouse.get_rel()  # Reset any accumulated movement
-        self.mouse_dragging = True
-
-    def stop_drag(self):
-        self.mouse_dragging = False
-
-
-class SceneNode(Node):
-    def __init__(self):
-        super().__init__('scene_node')
-        self.scene = Scene()
-        self.timer = self.create_timer(0.016, self.render_callback)  # ~60 FPS
-        self.get_logger().info("SceneNode initialized and running.")
-
-    def render_callback(self):
-        # Handle Pygame events
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                self.destroy_node()
-                rclpy.shutdown()
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:  # Left mouse button
-                    self.scene.start_drag()  # Reset mouse movement and start dragging
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1:  # Left mouse button
-                    self.scene.stop_drag()  # Stop dragging
-            elif event.type == pygame.MOUSEMOTION:
-                if self.scene.mouse_dragging:  # Only rotate if mouse is dragging
-                    rel = pygame.mouse.get_rel()
-                    self.scene.handle_mouse_motion(rel)
-            elif event.type == pygame.MOUSEWHEEL:
-                self.scene.handle_mouse_wheel(event.y)  # Use y offset for zoom
-
-        self.scene.render()
-        pygame.display.flip()
-
-
+# Main function for ROS 2 node
 def main(args=None):
     rclpy.init(args=args)
-    node = SceneNode()
-
+    node = PointCloudViewerNode()
+    node.load_data('/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_0.npz')
     try:
-        rclpy.spin(node)
+        node.run()
     except KeyboardInterrupt:
         pass
     finally:
-        pygame.quit()
-        node.destroy_node()
         rclpy.shutdown()
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

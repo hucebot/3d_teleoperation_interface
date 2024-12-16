@@ -1,83 +1,127 @@
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image
 import sensor_msgs_py.point_cloud2 as pc2
 from datetime import datetime
+import numpy as np
+from pynput import keyboard
+from threading import Thread, Lock
+import struct
+from tqdm import tqdm
+
 
 class PointCloudSaver(Node):
-    """
-    Node that subscribes to a PointCloud2 topic, saves the data dynamically with available fields to a PLY file.
-    """
-
     def __init__(self):
         super().__init__('pointcloud_saver')
-        self.subscription = self.create_subscription(
+        self.create_subscription(
             PointCloud2,
             '/camera/camera/depth/color/points',
             self.pointcloud_callback,
             10)
-        self.saved = False  # Ensure we save only one cloud and exit
+
+        self.recording = False
+        self.lock = Lock()
+        self.raw_frames = []
+        self.frame_width = 640
+        self.frame_height = 480
+        self.frame_counter = 0
+
+        self.xyz_frames = []
+        self.rgb_frames = []
+
+        self.keyboard_thread = Thread(target=self.run_keyboard_listener, daemon=True)
+        self.keyboard_thread.start()
+
 
     def pointcloud_callback(self, msg):
-        if not self.saved:
-            self.get_logger().info("Received PointCloud2 message, saving to file...")
-            self.save_pointcloud(msg)
-            self.saved = True
-            rclpy.shutdown()  # Shutdown the node after saving the cloud
+        points = pc2.read_points(msg, skip_nans=True, field_names=('x', 'y', 'z', 'rgb'))
 
-    def save_pointcloud(self, msg):
+        if self.recording:
+            with self.lock:
+                if self.frame_counter % 2 == 0:
+                    self.raw_frames.append(msg)
+                    self.get_logger().info(f"Frame saved. Total saved frames: {len(self.raw_frames)}")
+                self.frame_counter += 1
+
+    def process_and_save_frames(self):
         try:
-            # Extract fields dynamically
-            fields = [field.name for field in msg.fields]
-            points = list(pc2.read_points(msg, skip_nans=True, field_names=fields))
+            self.get_logger().info("Processing frames...")
+            for msg in tqdm(self.raw_frames, desc="Processing frames", unit="frame"):
+                points = pc2.read_points(msg, skip_nans=True, field_names=('x', 'y', 'z', 'rgb'))
+                
+                xyz_frame = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.float32)
+                rgb_frame = np.zeros((self.frame_height, self.frame_width, 3), dtype=np.float32)
+
+                rotation_x = np.array([[1, 0, 0],
+                                       [0, 0, 1],
+                                       [0, -1, 0]])
+                rotation_z = np.array([[0, 1, 0],
+                                       [1, 0, 0],
+                                       [0, 0, 1]])
+
+                for i, point in enumerate(points):
+                    if i >= self.frame_width * self.frame_height:
+                        break
+
+                    x, y, z, rgb = point
+                    row = i // self.frame_width
+                    col = i % self.frame_width
+
+                    original_point = np.array([x, y, z])
+                    rotated_point = rotation_z @ (rotation_x @ original_point)
+
+                    xyz_frame[row, col] = rotated_point
+
+                    #packed_rgb = struct.unpack('I', struct.pack('f', rgb))[0]
+                    packed_rgb = np.frombuffer(np.array([rgb], dtype=np.float32).tobytes(), dtype=np.uint32)[0]
+
+                    r = (packed_rgb & 0x00FF0000) >> 16
+                    g = (packed_rgb & 0x0000FF00) >> 8
+                    b = (packed_rgb & 0x000000FF)
+                    
+                    rgb_frame[row, col] = [r / 255.0, g / 255.0, b / 255.0]
+
+                self.xyz_frames.append(xyz_frame)
+                self.rgb_frames.append(rgb_frame)
+
+            self.save_to_file(self.xyz_frames, self.rgb_frames)
+
+        except Exception as e:
+            self.get_logger().error(f"Failed to process frames: {e}")
+            pass
+
+    def save_to_file(self, xyz_frames, rgb_frames):
+        try:
+            xyz_array = np.stack(xyz_frames, axis=0)
+            rgb_array = np.stack(rgb_frames, axis=0)
+
+            num_frames = len(xyz_frames)
             
-            # Save to file
-            if points:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                filename = f"/ros2_ws/src/ros2_3d_interface/pointcloud/pointcloud_{timestamp}.ply"
-                self.write_ply_file(filename, fields, points)
-                self.get_logger().info(f"Point cloud saved to {filename}")
-            else:
-                self.get_logger().warn("PointCloud2 message is empty.")
+            filepath = f"/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000.npz"
+            np.savez(filepath, xyz=xyz_array, color=rgb_array)
+            self.get_logger().info(f"Saved {num_frames} frames to {filepath}")
         except Exception as e:
-            self.get_logger().error(f"Failed to process PointCloud2: {e}")
+            self.get_logger().error(f"Failed to save file: {e}")
 
-    def write_ply_file(self, filename, fields, points):
-        """Write point cloud data to a PLY file dynamically based on fields."""
+    def on_press(self, key):
         try:
-            with open(filename, 'w') as f:
-                # Write PLY header
-                f.write("ply\n")
-                f.write("format ascii 1.0\n")
-                f.write(f"element vertex {len(points)}\n")
-                
-                # Define each field dynamically
-                for field in fields:
-                    if field == "rgb":
-                        f.write("property uchar red\n")
-                        f.write("property uchar green\n")
-                        f.write("property uchar blue\n")
-                    else:
-                        f.write(f"property float {field}\n")
-                
-                f.write("end_header\n")
-                
-                # Write point data
-                for point in points:
-                    line = []
-                    for i, field in enumerate(fields):
-                        if field == "rgb":
-                            # Convert float RGB to individual uchar values
-                            rgb = int(point[i])  # RGB packed as a single 32-bit integer
-                            r = (rgb >> 16) & 0xFF
-                            g = (rgb >> 8) & 0xFF
-                            b = rgb & 0xFF
-                            line.extend([r, g, b])
-                        else:
-                            line.append(point[i])
-                    f.write(" ".join(map(str, line)) + "\n")
-        except Exception as e:
-            self.get_logger().error(f"Failed to write PLY file: {e}")
+            if key == keyboard.Key.space:
+                if not self.recording:
+                    self.recording = True
+                    self.raw_frames = []
+                    self.frame_counter = 0
+                    self.get_logger().info("Recording started.")
+            elif key.char == 's':
+                if self.recording:
+                    self.recording = False
+                    self.get_logger().info("Recording stopped. Processing frames...")
+                    self.process_and_save_frames()
+        except AttributeError:
+            pass
+
+    def run_keyboard_listener(self):
+        with keyboard.Listener(on_press=self.on_press) as listener:
+            listener.join()
 
 
 def main(args=None):

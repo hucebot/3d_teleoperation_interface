@@ -28,10 +28,13 @@ RUN pip install\
     pyglet \
     moderngl \
     moderngl-window \
+    pyglm \
     glfw \
     pillow \
-    pygame
-
+    pygame \
+    pynput \
+    pyrr \
+    tqdm
 
 RUN pip install --upgrade numpy==1.23.5
 
