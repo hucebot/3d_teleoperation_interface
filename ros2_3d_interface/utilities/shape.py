@@ -5,6 +5,44 @@ from ros2_3d_interface.utilities.utils import (
     RotX, RotY, RotZ, RotIdentity, VectZero, VectOne, MatModel, MatNormal
 )
 
+class ShapeTrajectory():
+    def __init__(self, ctx, points):
+        self.ctx = ctx
+        # Program shaders
+        self.prog = ctx.program(
+            vertex_shader="""
+                #version 330 core
+                uniform mat4 mat_proj;
+                in vec3 pos;
+                void main() {
+                    gl_Position = mat_proj * vec4(pos, 1.0);
+                    gl_PointSize = 20.0;
+                }
+            """,
+            fragment_shader="""
+                #version 330 core
+                out vec4 fragment_color;
+                void main() {
+                    fragment_color = vec4(1.0, 0.0, 0.0, 1.0);
+                }
+            """,
+        )
+        self.uniform_mat_proj = self.prog["mat_proj"]
+
+        self.vbo = ctx.buffer(np.array(points).astype(np.float32).tobytes())
+        self.vao = ctx.vertex_array(self.prog, [(self.vbo, "3f4", "pos")])
+
+    def render(self, cam):
+        self.ctx.point_size = 10.0
+        self.uniform_mat_proj.write(cam.getMatProj().astype("f4"))
+        self.vao.render(mode=moderngl.POINTS)
+
+    def release(self):
+        self.prog.release()
+        self.vbo.release()
+        self.vao.release()
+
+
 class ShapeGrid():
     def __init__(self, ctx, length=10.0, segments=10):
         self.ctx = ctx
@@ -221,7 +259,8 @@ class ShapePointCloud():
         mat_model = MatModel(pos, rot, scale*VectOne())
         self.uniform_mat_proj.write(cam.getMatProj().astype("f4"))
         self.uniform_mat_model.write(mat_model.astype("f4"))
-        self.vao.render(mode=moderngl.POINTS);
+        self.vao.render(mode=moderngl.POINTS)
+        
     def release(self):
         self.prog.release()
         self.vbo.release()

@@ -8,7 +8,7 @@ from rclpy.node import Node
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
-    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeQuadTexture
+    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeQuadTexture, ShapeTrajectory
 )
 from ros2_3d_interface.utilities.utils import (
     RotIdentity
@@ -52,6 +52,22 @@ class PointCloudViewerNode(Node):
         # Frame indices
         self.index_frame = 0
         self.index_iterations = 0
+
+        # Initialize trajectory
+        self.points = [
+            [1.0, 0.5, 0.5],
+            [2.0, 1.0, 1.0],
+            [3.0, 1.5, 1.0],
+            [4.0, 2.0, 1.0],
+            [5.0, 2.5, 1.0],
+            [6.0, 2.0, 1.0],
+            [7.0, 1.5, 1.0],
+            [8.0, 0.0, 1.0],
+            [8.0, -1.0, 1.0]
+        ]
+        self.trajectory = ShapeTrajectory(self.ctx, self.points)
+        self.trajectory_color = [0.0, 1.0, 0.0, 1.0]
+
 
     def load_data(self, path_file, name_dataset_rgb='color', name_dataset_xyz='xyz'):
         with np.load(path_file, allow_pickle=True) as f:
@@ -144,6 +160,8 @@ class PointCloudViewerNode(Node):
                 color=[1.0, 1.0, 1.0, 1.0]
             )
 
+        self.trajectory.render(self.cam)
+
     def run(self):
         pyglet.clock.schedule_interval(self.update, 1 / 60.0)
         pyglet.app.run()
@@ -152,7 +170,7 @@ class PointCloudViewerNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     node = PointCloudViewerNode()
-    node.load_data('/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_0.npz')
+    node.load_data('/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_2.npz')
     try:
         node.run()
     except KeyboardInterrupt:

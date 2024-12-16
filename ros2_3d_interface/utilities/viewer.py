@@ -25,10 +25,10 @@ class Viewer():
         view_y = -np.sin(eye_angle1)
         #Camera motion
         cam_vel = 5.0
-        if self.keys[key.UP] or self.keys[key.W]:
+        if self.keys[key.UP] or self.keys[key.W] and not self.keys[key.LSHIFT]:
             vect[0] += cam_vel*dt*view_x
             vect[1] += cam_vel*dt*view_y
-        if self.keys[key.DOWN] or self.keys[key.S]:
+        if self.keys[key.DOWN] or self.keys[key.S] and not self.keys[key.LSHIFT]:
             vect[0] -= cam_vel*dt*view_x
             vect[1] -= cam_vel*dt*view_y
         if self.keys[key.LEFT] or self.keys[key.A]:

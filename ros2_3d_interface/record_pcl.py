@@ -97,7 +97,7 @@ class PointCloudSaver(Node):
 
             num_frames = len(xyz_frames)
             
-            filepath = f"/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000.npz"
+            filepath = f"/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_2.npz"
             np.savez(filepath, xyz=xyz_array, color=rgb_array)
             self.get_logger().info(f"Saved {num_frames} frames to {filepath}")
         except Exception as e:

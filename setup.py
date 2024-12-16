@@ -22,7 +22,7 @@ setup(
         'console_scripts': [
             '3d_interface = ros2_3d_interface.3d_interface:main',
             '3d_recorder = ros2_3d_interface.record_pcl:main',
-            'downsampled_points = ros2_3d_interface.filtered_pointcloud:main',
+            '3d_real_time = ros2_3d_interface.3d_real_time:main',
         ],
     },
 )
