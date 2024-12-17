@@ -18,6 +18,11 @@ if [ $isRunning -eq 0 ]; then
         --privileged \
         -it \
         -v /dev:/dev \
+        -v /run/udev:/run/udev \
+        --device /dev/dri \
+        --device /dev/snd \
+        --device /dev/input \
+        --device /dev/bus/usb \
         -v `pwd`/../:/ros2_ws/src/ros2_3d_interface \
         -w /ros2_ws \
         ros2_3d_interface:latest

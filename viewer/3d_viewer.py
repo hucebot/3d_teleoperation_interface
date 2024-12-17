@@ -146,5 +146,5 @@ class PointCloudViewer:
 
 if __name__ == "__main__":
     viewer = PointCloudViewer()
-    viewer.load_data('/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_0.npz')
+    viewer.load_data('/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_2.npz')
     viewer.run()

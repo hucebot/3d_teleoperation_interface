@@ -225,7 +225,7 @@ class ShapePointCloud():
                 void main() {
                     gl_Position = mat_proj*mat_model*vec4(pos, 1.0);
                     vertex_color = color;
-                    gl_PointSize = 3;
+                    gl_PointSize = 5;
                 }
             """,
             fragment_shader="""
@@ -240,8 +240,8 @@ class ShapePointCloud():
         self.uniform_mat_proj = self.prog["mat_proj"]
         self.uniform_mat_model = self.prog["mat_model"]
         #Generate vertices
-        array_points_rgb = np.ones((size_points,3))
-        array_points_xyz = np.zeros((size_points,3))
+        array_points_rgb = np.ones((size_points,5))
+        array_points_xyz = np.zeros((size_points,5))
         #Create buffers
         self.vbo_rgb = ctx.buffer(array_points_rgb.astype(np.float32).tobytes())
         self.vbo_xyz = ctx.buffer(array_points_xyz.astype(np.float32).tobytes())

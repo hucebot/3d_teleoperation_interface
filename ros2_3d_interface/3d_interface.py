@@ -15,7 +15,7 @@ from ros2_3d_interface.utilities.utils import (
 )
 
 class PointCloudViewerNode(Node):
-    def __init__(self, screen_width=1800, screen_height=1200, fps=5.5):
+    def __init__(self, screen_width=1240, screen_height=720, fps=5.5):
         super().__init__('pointcloud_viewer_node')
         self.screen_width = screen_width
         self.screen_height = screen_height

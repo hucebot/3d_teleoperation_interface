@@ -1,4 +1,4 @@
-FROM ros:humble
+FROM nvidia/opengl:1.2-glvnd-devel-ubuntu22.04
 ENV ROS_DISTRO humble
 
 ENV DISPLAY=:0
@@ -38,6 +38,19 @@ RUN pip install\
 
 RUN pip install --upgrade numpy==1.23.5
 
+###### Install ROS2
+RUN apt-get install -y \
+    curl \
+    gnupg2 \
+    lsb-release
+
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | tee /etc/apt/sources.list.d/ros2.list > /dev/null
+RUN apt-get update && apt-get upgrade
+RUN apt install ros-humble-desktop-full -y
+RUN apt install ros-dev-tools -y
+RUN rosdep init && rosdep update
+
 ###### Install ROS Dependencies
 RUN apt install -y \
     ros-${ROS_DISTRO}-cv-bridge \
@@ -46,11 +59,18 @@ RUN apt install -y \
     ros-${ROS_DISTRO}-librealsense2*
 
 ####### Install ROS2 Realsense
+RUN apt install -y git
 RUN mkdir -p /ros2_ws/src
 WORKDIR /ros2_ws/src
 RUN git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-master
 WORKDIR /ros2_ws
-RUN rosdep install -i --from-path src --rosdistro $ROS_DISTRO --skip-keys=librealsense2 -y
+RUN rosdep install -i --from-path src --rosdistro ${ROS_DISTRO} --skip-keys=librealsense2 -y
+
+RUN apt install -y libgflags-dev nlohmann-json3-dev  \
+    ros-${ROS_DISTRO}-image-transport ros-${ROS_DISTRO}-image-publisher ros-${ROS_DISTRO}-camera-info-manager \
+    ros-${ROS_DISTRO}-diagnostic-updater ros-${ROS_DISTRO}-diagnostic-msgs ros-${ROS_DISTRO}-statistics-msgs \
+    ros-${ROS_DISTRO}-backward-ros libdw-dev
+
 
 ###### Install Dependencies
 RUN  apt install -y \
@@ -67,4 +87,9 @@ RUN  apt install -y \
     libx11-xcb1 libxcb-util1 libxcb-render0 libxcb-shape0 \
     libxcb-xfixes0 libxcb-keysyms1 libxcb-image0 libxcb-randr0 \
     libxcb-xtest0 libxcb-cursor0 xvfb \
-    python3-rosdep
+    python3-rosdep \
+    gedit \
+    git
+
+###### Source ROS2
+RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
