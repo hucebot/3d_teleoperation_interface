@@ -226,7 +226,7 @@ class ShapePointCloud():
                 void main() {
                     gl_Position = mat_proj * mat_model * mat_rotation * vec4(pos, 1.0);
                     vertex_color = color;
-                    gl_PointSize = 2;
+                    gl_PointSize = 3;
                 }
             """,
             fragment_shader="""

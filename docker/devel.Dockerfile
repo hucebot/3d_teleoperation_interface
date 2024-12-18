@@ -34,7 +34,8 @@ RUN pip install\
     pygame \
     pynput \
     pyrr \
-    tqdm
+    tqdm \
+    urdfpy
 
 RUN pip install --upgrade numpy==1.23.5
 
