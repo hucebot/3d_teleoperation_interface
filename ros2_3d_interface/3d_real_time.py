@@ -5,13 +5,15 @@ import pyglet
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2
+from visualization_msgs.msg import MarkerArray, Marker
 import sensor_msgs_py.point_cloud2 as pc2
 
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
-    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeQuadTexture
+    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeQuadTexture, ShapeTrajectory
 )
+
 from ros2_3d_interface.utilities.utils import (
     RotIdentity
 )
@@ -21,6 +23,8 @@ class PointCloudViewerNode(Node):
         super().__init__('pointcloud_viewer_node')
         self.screen_width = screen_width
         self.screen_height = screen_height
+
+        self.render_pyramid = False
 
         # Initialize camera and viewer
         self.cam = Camera()
@@ -47,6 +51,9 @@ class PointCloudViewerNode(Node):
         self.array_frames_xyz = np.zeros((self.size_points, 3), dtype=np.float32)
         self.array_frames_rgb = np.zeros((self.size_points, 3), dtype=np.float32)
 
+        self.trajectory_points = []
+        self.trajectory = None
+
         # Subscribe to PointCloud2 topic
         self.create_subscription(
             PointCloud2,
@@ -54,44 +61,36 @@ class PointCloudViewerNode(Node):
             self.pointcloud_callback,
             10
         )
+
+        self.create_subscription(
+            MarkerArray,
+            '/trajectory_points',
+            self.trajectory_callback,
+            10
+        )
+
         self.get_logger().info("Point cloud viewer node initialized")
+
+    def trajectory_callback(self, msg):
+        self.trajectory_points = []
+        for marker in msg.markers:
+            self.trajectory_points.append([marker.pose.position.x * 10, marker.pose.position.y * 10, marker.pose.position.z * 10]) 
+        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points)
+        self.trajectory_color = [0.0, 1.0, 0.0, 1.0]
 
     def pointcloud_callback(self, msg):
         """Callback for PointCloud2 messages."""
-        self.get_logger().info("Received point cloud message")
         try:
-            points = pc2.read_points(msg, skip_nans=True, field_names=('x', 'y', 'z', 'rgb'))
+            data = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
+            points = np.array(list(data), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
+            self.array_frames_xyz = np.stack((points['x'], points['y'], points['z']), axis=-1)
 
-            xyz_data = np.zeros((self.size_points, 3), dtype=np.float32)
-            rgb_data = np.zeros((self.size_points, 3), dtype=np.float32)
+            rgb = np.frombuffer(points['rgb'].tobytes(), dtype=np.uint32)
+            r = (rgb & 0x00FF0000) >> 16
+            g = (rgb & 0x0000FF00) >> 8
+            b = (rgb & 0x000000FF)
+            self.array_frames_rgb = np.stack((r, g, b), axis=-1) / 255.0
 
-            rotation_x = np.array([[1, 0, 0],
-                                       [0, 0, 1],
-                                       [0, -1, 0]])
-            rotation_z = np.array([[0, 1, 0],
-                                    [1, 0, 0],
-                                    [0, 0, 1]])
-
-            for i, point in enumerate(points):
-                if i >= self.size_points:
-                    break
-
-                x, y, z, rgb = point
-                original_point = np.array([x, y, z])
-                
-                rotated_point = rotation_z @ (rotation_x @ original_point)
-                x, y, z = rotated_point
-                
-                xyz_data[i] = [x, y, z]
-
-                packed_rgb = np.frombuffer(np.array([rgb], dtype=np.float32).tobytes(), dtype=np.uint32)[0]
-                r = (packed_rgb & 0x00FF0000) >> 16
-                g = (packed_rgb & 0x0000FF00) >> 8
-                b = (packed_rgb & 0x000000FF)
-                rgb_data[i] = [r / 255.0, g / 255.0, b / 255.0]
-
-            self.array_frames_xyz = xyz_data
-            self.array_frames_rgb = rgb_data
         except Exception as e:
             self.get_logger().error(f"Error processing point cloud: {e}")
 
@@ -124,15 +123,19 @@ class PointCloudViewerNode(Node):
             scale=10.0
         )
 
-        self.pyramid.render(
-            self.cam,
-            pos=[0.0, 0.0, 0.0],
-            rot=RotIdentity(),
-            fovx=fovx,
-            aspect=self.screen_width / self.screen_height,
-            far=far,
-            color=[1.0, 1.0, 1.0, 1.0]
-        )
+        if self.trajectory is not None:
+            self.trajectory.render(self.cam)
+
+        if self.render_pyramid:
+            self.pyramid.render(
+                self.cam,
+                pos=[0.0, 0.0, 0.0],
+                rot=RotIdentity(),
+                fovx=fovx,
+                aspect=self.screen_width / self.screen_height,
+                far=far,
+                color=[1.0, 1.0, 1.0, 1.0]
+            )
 
     def spin_once(self):
         """Spin ROS once."""
