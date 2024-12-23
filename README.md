@@ -6,7 +6,7 @@ https://opensource.org/licenses/BSD-3-Clause)
 https://docs.ros.org/en/humble/index.html)
 
 
-<img src=https://github.com/hucebot/3d_teleoperation_interface/tree/dev/images/line_of_sight.gif>
+<img src=https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/line_of_sight.gif>
 
 ## Table of Contents
 
