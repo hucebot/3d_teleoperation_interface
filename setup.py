@@ -24,6 +24,7 @@ setup(
             '3d_recorder = ros2_3d_interface.record_pcl:main',
             '3d_real_time = ros2_3d_interface.3d_real_time:main',
             'publish_trajectory = ros2_3d_interface.trajectory:main',
+            'verify_trajectory = ros2_3d_interface.trajectory_verify:main'
         ],
     },
 )

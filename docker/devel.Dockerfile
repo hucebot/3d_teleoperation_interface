@@ -92,5 +92,8 @@ RUN  apt install -y \
     gedit \
     git
 
+###### Install TORCH
+RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
 ###### Source ROS2
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc

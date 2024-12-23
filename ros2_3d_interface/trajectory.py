@@ -11,16 +11,10 @@ class TrajectoryNode(Node):
         super().__init__('trajectory_node')
 
         self.trajectory = [
-            [1.0, 0.5, 0.5],
+            [1.0, 0.5, 0.1],
             [1.8, 0.3, 0.2],
-            [2.5, 0.9, 0.8],
+            [2.5, 0.6, 0.3],
         ]
-
-        self.origin = np.array([0.0, 0.0, 0.0])
-        self.origin_point = Point()
-        self.origin_point.x = self.origin[0]
-        self.origin_point.y = self.origin[1]
-        self.origin_point.z = self.origin[2]
 
         self.trajectory_publisher = self.create_publisher(
             MarkerArray,
@@ -41,9 +35,9 @@ class TrajectoryNode(Node):
             marker.pose.position.x = point[0]
             marker.pose.position.y = point[1]
             marker.pose.position.z = point[2]
-            marker.scale.x = 0.03
-            marker.scale.y = 0.03
-            marker.scale.z = 0.03
+            marker.scale.x = 0.05
+            marker.scale.y = 0.05
+            marker.scale.z = 0.05
             marker.color.a = 1.0
             marker.color.r = 0.0
             marker.color.g = 1.0
