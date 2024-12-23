@@ -12,8 +12,8 @@ class TrajectoryNode(Node):
 
         self.trajectory = [
             [1.0, 0.5, 0.1],
-            [1.8, 0.3, 0.2],
-            [2.5, 0.6, 0.3],
+            #[1.8, 0.3, 0.2],
+            #[2.5, 0.6, 0.3],
         ]
 
         self.trajectory_publisher = self.create_publisher(
