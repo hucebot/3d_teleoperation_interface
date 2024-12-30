@@ -7,6 +7,7 @@ from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2
 from visualization_msgs.msg import MarkerArray, Marker
 import sensor_msgs_py.point_cloud2 as pc2
+import torch
 
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
@@ -48,8 +49,10 @@ class PointCloudViewerNode(Node):
         self.frame_width = 640
         self.frame_height = 480
         self.size_points = self.frame_width * self.frame_height
-        self.array_frames_xyz = np.zeros((self.size_points, 3), dtype=np.float32)
-        self.array_frames_rgb = np.zeros((self.size_points, 3), dtype=np.float32)
+
+        self.array_frames_xyz = torch.zeros((640 * 480, 3), dtype=torch.float32, device="cuda")
+        self.array_frames_rgb = torch.zeros((640 * 480, 3), dtype=torch.float32, device="cuda")
+
 
         self.trajectory_points = []
         self.trajectory = None
@@ -79,28 +82,33 @@ class PointCloudViewerNode(Node):
         self.trajectory_color = [0.0, 1.0, 0.0, 1.0]
 
     def pointcloud_callback(self, msg):
-        """Callback for PointCloud2 messages."""
+        """Callback optimizado para PointCloud2."""
         try:
-            data = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
-            points = np.array(list(data), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
-            self.array_frames_xyz = np.stack((points['x'], points['y'], points['z']), axis=-1)
-
+            cloud_data = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
+            points = np.array(list(cloud_data), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
+            self.array_frames_xyz = torch.tensor(
+                np.stack((points['x'], points['y'], points['z']), axis=-1),
+                device="cuda"
+            )
             rgb = np.frombuffer(points['rgb'].tobytes(), dtype=np.uint32)
             r = (rgb & 0x00FF0000) >> 16
             g = (rgb & 0x0000FF00) >> 8
             b = (rgb & 0x000000FF)
-            self.array_frames_rgb = np.stack((r, g, b), axis=-1) / 255.0
-
+            self.array_frames_rgb = torch.tensor(
+                np.stack((r, g, b), axis=-1) / 255.0,
+                device="cuda"
+            )
         except Exception as e:
-            self.get_logger().error(f"Error processing point cloud: {e}")
+            self.get_logger().error(f"Error procesando la nube de puntos: {e}")
+
 
     def update(self, dt):
         """Update and render the scene."""
         self.viewer.update(dt)
 
         # Update cloud points and texture
-        self.cloud.update_points(array_xyz=self.array_frames_xyz)
-        self.cloud.update_points(array_rgb=self.array_frames_rgb)
+        self.cloud.update_points(array_xyz=self.array_frames_xyz.cpu().numpy())
+        self.cloud.update_points(array_rgb=self.array_frames_rgb.cpu().numpy())
 
         # Clear and render
         self.ctx.screen.use()
