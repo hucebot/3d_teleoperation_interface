@@ -90,7 +90,9 @@ RUN  apt install -y \
     libxcb-xtest0 libxcb-cursor0 xvfb \
     python3-rosdep \
     gedit \
-    git
+    git \
+    libpcap-dev
+
 
 ###### Install TORCH
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118

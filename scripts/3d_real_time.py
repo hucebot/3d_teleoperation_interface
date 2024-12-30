@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import moderngl
 import numpy as np
@@ -12,7 +14,7 @@ import torch
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
-    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeQuadTexture, ShapeTrajectory
+    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeTrajectory
 )
 
 from ros2_3d_interface.utilities.utils import (

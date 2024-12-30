@@ -68,6 +68,13 @@ There is a ros2 node that visualizes the point cloud data in real time without u
 ros2 run ros2_3d_interface 3d_real_time
 ```
 
+### Separate point cloud data
+There is a ROS2 node that separates the point cloud data into three different point clouds depending on the distance to the camera. To run the node, use the following command:
+
+```bash
+ros2 run ros2_3d_interface cloud_separation
+```
+
 ### Publish point cloud data
 To publish the point cloud data, it will depent on the camera you are using. For the Intel RealSense D435i, you can use the following command:
 

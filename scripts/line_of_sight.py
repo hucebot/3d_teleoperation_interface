@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rclpy
 from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray, Marker
@@ -6,7 +8,6 @@ from sensor_msgs.msg import PointCloud2, Image
 import sensor_msgs_py.point_cloud2 as pc2
 import numpy as np
 import torch
-
 
 class TrajectoryVerify(Node):
     def __init__(self):

@@ -1,13 +1,13 @@
+#!/usr/bin/env python
+
 import rclpy
 from rclpy.node import Node
 from visualization_msgs.msg import MarkerArray, Marker
-from geometry_msgs.msg import Point
-from sensor_msgs.msg import PointCloud2
-import sensor_msgs_py.point_cloud2 as pc2
-import numpy as np
+import time
 
 class TrajectoryNode(Node):
     def __init__(self):
+        self.get_logger().info('Starting Trajectory')
         super().__init__('trajectory_node')
 
         self.trajectory = [
@@ -21,7 +21,6 @@ class TrajectoryNode(Node):
             '/trajectory_points',
             10
         )
-
 
     def publish_trajectory(self):
         marker_array = MarkerArray()
@@ -47,17 +46,18 @@ class TrajectoryNode(Node):
 
         self.trajectory_publisher.publish(marker_array)
 
+    def run(self):
+        while True:
+            rclpy.spin_once(self, timeout_sec=0.1)
+            self.publish_trajectory()
 
 def main(args=None):
     rclpy.init(args=args)
-    node = TrajectoryNode()
     try:
-        while rclpy.ok():
-            rclpy.spin_once(node, timeout_sec=0.1)
-            node.publish_trajectory()
-            
+        node = TrajectoryNode()
+        node.run()
+        print('Trajectory node running')
     except KeyboardInterrupt:
         pass
     finally:
-        node.destroy_node()
         rclpy.shutdown()

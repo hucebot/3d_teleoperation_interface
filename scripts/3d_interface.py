@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import moderngl
 import numpy as np
