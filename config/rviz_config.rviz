@@ -4,8 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Markers1
         - /Markers1/line_of_sight1/Topic1
-        - /PointClouds1
       Splitter Ratio: 0.5
     Tree Height: 457
   - Class: rviz_common/Selection
@@ -60,7 +60,7 @@ Visualization Manager:
           Enabled: true
           Name: trajectory
           Namespaces:
-            {}
+            "": true
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -72,13 +72,26 @@ Visualization Manager:
           Enabled: true
           Name: line_of_sight
           Namespaces:
-            {}
+            rotated_points: true
+            trajectory_lines: true
           Topic:
             Depth: 5
             Durability Policy: Volatile
             History Policy: Keep Last
             Reliability Policy: Reliable
             Value: /trajectory_verify
+          Value: true
+        - Class: rviz_default_plugins/MarkerArray
+          Enabled: true
+          Name: bounding_boxes
+          Namespaces:
+            trajectory_boxes: true
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /visualization_boxes
           Value: true
       Enabled: true
       Name: Markers
@@ -119,9 +132,9 @@ Visualization Manager:
           Name: raw_point_cloud
           Position Transformer: XYZ
           Selectable: true
-          Size (Pixels): 3
+          Size (Pixels): 5
           Size (m): 0.009999999776482582
-          Style: Points
+          Style: Spheres
           Topic:
             Depth: 5
             Durability Policy: Volatile
@@ -282,25 +295,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 2.0413737297058105
+      Distance: 1.9822099208831787
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.289371371269226
-        Y: -0.05726916342973709
-        Z: -0.003271033987402916
+        X: 1.2886135578155518
+        Y: -0.028231807053089142
+        Z: -0.030652523040771484
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.17479874193668365
+      Pitch: 0.05979830399155617
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.9554007053375244
+      Yaw: 3.105400800704956
     Saved: ~
 Window Geometry:
   Displays:

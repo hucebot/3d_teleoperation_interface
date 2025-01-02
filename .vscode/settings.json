@@ -5,5 +5,11 @@
         "/home/cdonoso/ros2_ws/install/ros2_streamer/lib/python3.10/site-packages",
         "/home/cdonoso/ros2_ws/install/humanoid_control/lib/python3.10/site-packages",
         "/opt/ros/rolling/lib/python3.12/site-packages"
-    ]
+    ],
+    "files.associations": {
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "__split_buffer": "cpp"
+    }
 }

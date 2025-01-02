@@ -5,15 +5,14 @@
 #include "geometry_msgs/msg/point.hpp"
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/conversions.h>
+#include "pcl_conversions/pcl_conversions.h"
 #include <pcl/filters/crop_box.h>
-#include <pcl_ros/point_cloud.h>
 #include <Eigen/Core>
 
 class TrajectoryVerify : public rclcpp::Node
 {
 public:
-    TrajectoryVerify() : Node("trajectory_verify"), margin_width_(1.0), margin_height_(1.0), margin_depth_(1.0)
+    TrajectoryVerify() : Node("trajectory_verify"), margin_width_(0.05), margin_height_(0.05), margin_depth_(1.5)
     {
         origin_ = {0.0, 0.0, 0.0};
 
@@ -40,6 +39,7 @@ private:
 
     Point3D origin_;
     std::vector<Point3D> trajectory_points_;
+    std::vector<Point3D> rotated_trajectory_points_;
     pcl::PointCloud<pcl::PointXYZ>::Ptr point_cloud_;
     float margin_width_;
     float margin_height_;
@@ -53,11 +53,33 @@ private:
     void trajectoryCallback(const visualization_msgs::msg::MarkerArray::SharedPtr msg)
     {
         trajectory_points_.clear();
+        rotated_trajectory_points_.clear();
+
+        Eigen::Matrix3f rotation_y;
+        rotation_y << 0, 0, 1,
+                      0, 1, 0,
+                      1, 0, 0;
+
+        Eigen::Matrix3f rotation_z;
+        rotation_z << 0, -1, 0,
+                      -1, 0, 0,
+                      0, 0, 1;
+
         for (const auto &marker : msg->markers)
         {
-            Point3D point = {marker.pose.position.x, marker.pose.position.y, marker.pose.position.z};
-            trajectory_points_.push_back(point);
+            Point3D original_point = {marker.pose.position.x, marker.pose.position.y, marker.pose.position.z};
+            trajectory_points_.push_back(original_point);
+
+            Eigen::Vector3f point(marker.pose.position.x, marker.pose.position.y, marker.pose.position.z);
+
+            point = rotation_y * point;
+            point = rotation_z * point;
+
+            Point3D rotated_point = {point.x(), point.y(), point.z()};
+            rotated_trajectory_points_.push_back(rotated_point);
         }
+
+        publishRotatedPoints();
     }
 
     void pointCloudCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
@@ -69,16 +91,19 @@ private:
 
     void verifyLineOfSight()
     {
-        if (!point_cloud_ || trajectory_points_.empty())
+        if (!point_cloud_ || rotated_trajectory_points_.empty())
             return;
 
         auto marker_array = visualization_msgs::msg::MarkerArray();
         auto box_visualization_array = visualization_msgs::msg::MarkerArray();
+        auto obstacle_markers = visualization_msgs::msg::MarkerArray();
 
-        for (size_t i = 0; i < trajectory_points_.size(); ++i)
+        for (size_t i = 0; i < rotated_trajectory_points_.size(); ++i)
         {
-            const auto &point = trajectory_points_[i];
-            bool obstructed = checkObstruction(point);
+            const auto &rotated_point = rotated_trajectory_points_[i];
+            const auto &original_point = trajectory_points_[i];
+
+            bool obstructed = checkObstruction(rotated_point, obstacle_markers);
 
             auto marker = visualization_msgs::msg::Marker();
             marker.header.frame_id = "camera_link";
@@ -95,7 +120,6 @@ private:
                 marker.color.g = 0.0;
                 marker.color.b = 0.0;
                 marker.color.a = 1.0;
-                RCLCPP_INFO(this->get_logger(), "Point %zu is obstructed", i);
             }
             else
             {
@@ -103,7 +127,6 @@ private:
                 marker.color.g = 1.0;
                 marker.color.b = 0.0;
                 marker.color.a = 1.0;
-                RCLCPP_INFO(this->get_logger(), "Point %zu is not obstructed", i);
             }
 
             geometry_msgs::msg::Point start_point;
@@ -112,62 +135,25 @@ private:
             start_point.z = origin_.z;
 
             geometry_msgs::msg::Point end_point;
-            end_point.x = point.x;
-            end_point.y = point.y;
-            end_point.z = point.z;
+            end_point.x = original_point.x;
+            end_point.y = original_point.y;
+            end_point.z = original_point.z;
 
             marker.points.push_back(start_point);
             marker.points.push_back(end_point);
             marker_array.markers.push_back(marker);
 
-            // Add box visualization
-            auto box_marker = createBoxMarker(i, point);
+            auto box_marker = createBoxMarker(i, original_point);
             box_visualization_array.markers.push_back(box_marker);
         }
 
         trajectory_verify_publisher_->publish(marker_array);
         box_visualization_publisher_->publish(box_visualization_array);
+
+        //box_visualization_publisher_->publish(obstacle_markers);
     }
 
-    visualization_msgs::msg::Marker createBoxMarker(size_t id, const Point3D &point)
-    {
-        auto marker = visualization_msgs::msg::Marker();
-        marker.header.frame_id = "camera_link";
-        marker.header.stamp = this->now();
-        marker.ns = "trajectory_boxes";
-        marker.id = static_cast<int>(id);
-        marker.type = visualization_msgs::msg::Marker::CUBE;
-        marker.action = visualization_msgs::msg::Marker::ADD;
-
-        // Set the position of the center of the box
-        marker.pose.position.x = (origin_.x + point.x) / 2.0;
-        marker.pose.position.y = (origin_.y + point.y) / 2.0;
-        marker.pose.position.z = (origin_.z + point.z) / 2.0;
-
-        // Set box orientation (aligned with the axis)
-        marker.pose.orientation.x = 0.0;
-        marker.pose.orientation.y = 0.0;
-        marker.pose.orientation.z = 0.0;
-        marker.pose.orientation.w = 1.0;
-
-        // Set the scale of the box
-        marker.scale.x = margin_width_;
-        marker.scale.y = margin_height_;
-        marker.scale.z = std::sqrt(
-            std::pow(point.x - origin_.x, 2) +
-            std::pow(point.y - origin_.y, 2) +
-            std::pow(point.z - origin_.z, 2));
-
-        // Set the color with alpha for visualization
-        marker.color.r = 0.0;
-        marker.color.g = 0.0;
-        marker.color.b = 1.0;
-        marker.color.a = 0.6; // Transparency
-
-        return marker;
-    }
-
-    bool checkObstruction(const Point3D &target_point)
+    bool checkObstruction(const Point3D &target_point, visualization_msgs::msg::MarkerArray &obstacle_markers)
     {
         pcl::CropBox<pcl::PointXYZ> crop_box;
         crop_box.setMin(Eigen::Vector4f(
@@ -185,7 +171,111 @@ private:
         auto cropped_cloud = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
         crop_box.filter(*cropped_cloud);
 
+        size_t marker_id_offset = 1000;
+        for (size_t i = 0; i < cropped_cloud->points.size(); ++i)
+        {
+            const auto &obstacle_point = cropped_cloud->points[i];
+
+            auto marker = visualization_msgs::msg::Marker();
+            marker.header.frame_id = "camera_link";
+            marker.header.stamp = this->now();
+            marker.ns = "obstacle_points";
+            marker.id = marker_id_offset + static_cast<int>(i);
+            marker.type = visualization_msgs::msg::Marker::SPHERE;
+            marker.action = visualization_msgs::msg::Marker::ADD;
+
+            // Posición del marcador
+            marker.pose.position.x = obstacle_point.x;
+            marker.pose.position.y = obstacle_point.y;
+            marker.pose.position.z = obstacle_point.z;
+
+            // Escala del marcador
+            marker.scale.x = 0.05;
+            marker.scale.y = 0.05;
+            marker.scale.z = 0.05;
+
+            // Color del marcador (por ejemplo, rojo)
+            marker.color.r = 1.0;
+            marker.color.g = 0.0;
+            marker.color.b = 0.0;
+            marker.color.a = 0.8;
+
+            obstacle_markers.markers.push_back(marker);
+        }
+
         return !cropped_cloud->empty();
+    }
+
+    visualization_msgs::msg::Marker createBoxMarker(size_t id, const Point3D &point)
+    {
+        auto marker = visualization_msgs::msg::Marker();
+        marker.header.frame_id = "camera_link";
+        marker.header.stamp = this->now();
+        marker.ns = "trajectory_boxes";
+        marker.id = static_cast<int>(id);
+        marker.type = visualization_msgs::msg::Marker::CUBE;
+        marker.action = visualization_msgs::msg::Marker::ADD;
+
+        marker.pose.position.x = (origin_.x + point.x) / 2.0;
+        marker.pose.position.y = (origin_.y + point.y) / 2.0;
+        marker.pose.position.z = (origin_.z + point.z) / 2.0;
+
+        Eigen::Vector3f direction_vector(point.x - origin_.x, point.y - origin_.y, point.z - origin_.z);
+        direction_vector.normalize();
+
+        Eigen::Vector3f default_axis(1.0, 0.0, 0.0);
+        Eigen::Quaternionf quaternion = Eigen::Quaternionf::FromTwoVectors(default_axis, direction_vector);
+
+        marker.pose.orientation.x = quaternion.x();
+        marker.pose.orientation.y = quaternion.y();
+        marker.pose.orientation.z = quaternion.z();
+        marker.pose.orientation.w = quaternion.w();
+
+        marker.scale.x = direction_vector.norm();
+        marker.scale.y = margin_width_;
+        marker.scale.z = margin_height_;
+
+        marker.color.r = 0.0;
+        marker.color.g = 0.0;
+        marker.color.b = 1.0;
+        marker.color.a = 0.6;
+
+        return marker;
+    }
+
+    void publishRotatedPoints()
+    {
+        auto marker_array = visualization_msgs::msg::MarkerArray();
+
+        for (size_t i = 0; i < rotated_trajectory_points_.size(); ++i)
+        {
+            const auto &point = rotated_trajectory_points_[i];
+
+            auto marker = visualization_msgs::msg::Marker();
+            marker.header.frame_id = "camera_link";
+            marker.header.stamp = this->now();
+            marker.ns = "rotated_points";
+            marker.id = static_cast<int>(i);
+            marker.type = visualization_msgs::msg::Marker::SPHERE;
+            marker.action = visualization_msgs::msg::Marker::ADD;
+
+            marker.pose.position.x = point.x;
+            marker.pose.position.y = point.y;
+            marker.pose.position.z = point.z;
+
+            marker.scale.x = 0.05;
+            marker.scale.y = 0.05;
+            marker.scale.z = 0.05;
+
+            marker.color.r = 0.0;
+            marker.color.g = 0.0;
+            marker.color.b = 1.0;
+            marker.color.a = 1.0;
+
+            marker_array.markers.push_back(marker);
+        }
+
+        trajectory_verify_publisher_->publish(marker_array);
     }
 };
 
