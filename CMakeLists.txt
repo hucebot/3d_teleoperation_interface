@@ -25,12 +25,13 @@ add_definitions(${PCL_DEFINITIONS})
 
 include_directories(include)
 
-
 add_executable(cloud_separation src/cloud_separation.cpp)
 add_executable(publish_trajectory src/trajectory.cpp)
 add_executable(verify_line_of_sight src/verify_line_of_sight.cpp)
+add_executable(point_cloud_publisher src/point_cloud_publisher.cpp)
 
 ament_target_dependencies(publish_trajectory rclcpp visualization_msgs)
+ament_target_dependencies(point_cloud_publisher rclcpp sensor_msgs pcl_conversions PCL)
 
 ament_target_dependencies(
   cloud_separation
@@ -54,6 +55,7 @@ install(TARGETS
   cloud_separation
   publish_trajectory
   verify_line_of_sight
+  point_cloud_publisher
   DESTINATION lib/${PROJECT_NAME}
 )
 

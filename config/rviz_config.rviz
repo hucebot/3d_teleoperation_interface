@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Markers1
         - /Markers1/line_of_sight1/Topic1
       Splitter Ratio: 0.5
     Tree Height: 457
@@ -72,7 +71,6 @@ Visualization Manager:
           Enabled: true
           Name: line_of_sight
           Namespaces:
-            rotated_points: true
             trajectory_lines: true
           Topic:
             Depth: 5
@@ -121,7 +119,7 @@ Visualization Manager:
           Channel Name: intensity
           Class: rviz_default_plugins/PointCloud2
           Color: 255; 255; 255
-          Color Transformer: RGB8
+          Color Transformer: Intensity
           Decay Time: 0
           Enabled: true
           Invert Rainbow: false
@@ -295,25 +293,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.9822099208831787
+      Distance: 3.299898147583008
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.2886135578155518
-        Y: -0.028231807053089142
-        Z: -0.030652523040771484
+        X: 1.213843822479248
+        Y: -0.2013242095708847
+        Z: -0.0314456969499588
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.05979830399155617
+      Pitch: 0.34479764103889465
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.105400800704956
+      Yaw: 2.730375289916992
     Saved: ~
 Window Geometry:
   Displays:
