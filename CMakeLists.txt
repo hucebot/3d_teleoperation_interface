@@ -66,6 +66,7 @@ install(PROGRAMS
   scripts/trajectory.py
   scripts/streamdeck.py
   scripts/trajectory_bridge.py
+  scripts/record_pcl.py
   ros2_3d_interface/utilities/camera.py
   ros2_3d_interface/utilities/shape.py
   ros2_3d_interface/utilities/utils.py

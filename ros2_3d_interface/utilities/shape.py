@@ -96,8 +96,6 @@ class ShapeTrajectory():
         if self.vao_arrows:
             self.vao_arrows.release()
 
-
-
 class ShapeGrid():
     def __init__(self, ctx, length=10.0, segments=10):
         self.ctx = ctx
@@ -397,4 +395,3 @@ class ShapeQuadTexture():
         self.prog.release()
         self.vbo.release()
         self.vao.release()
-

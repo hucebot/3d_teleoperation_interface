@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, Image
@@ -97,7 +99,7 @@ class PointCloudSaver(Node):
 
             num_frames = len(xyz_frames)
             
-            filepath = f"/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_2.npz"
+            filepath = f"/ros2_ws/src/ros2_3d_interface/pointclouds/pointcloud_0000_1.npz"
             np.savez(filepath, xyz=xyz_array, color=rgb_array)
             self.get_logger().info(f"Saved {num_frames} frames to {filepath}")
         except Exception as e:

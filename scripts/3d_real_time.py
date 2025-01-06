@@ -1,23 +1,21 @@
 #!/usr/bin/env python
 
-import os
-import moderngl
+import os, moderngl, rclpy, pyglet, torch, datetime
+
 import numpy as np
-import pyglet
-import rclpy
+
 from rclpy.node import Node
 from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2
 from visualization_msgs.msg import MarkerArray, Marker
 import sensor_msgs_py.point_cloud2 as pc2
-import torch
+
 
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
     ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeTrajectory
 )
-
 from ros2_3d_interface.utilities.utils import (
     RotIdentity
 )
@@ -25,11 +23,20 @@ from ros2_3d_interface.utilities.utils import (
 class PointCloudViewerNode(Node):
     def __init__(self, screen_width=1240, screen_height=720):
         super().__init__('pointcloud_viewer_node')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.get_logger().warn(f"Using device: {self.device}")
+
         self.screen_width = screen_width
         self.screen_height = screen_height
 
         self.render_pyramid = False
-        self.update_pointcloud = False
+        self.update_pointcloud = True
+
+        # Placeholders for data
+        self.frame_width = 640
+        self.frame_height = 480
+        self.size_points = self.frame_width * self.frame_height
+        self.cloud_data = np.zeros((self.size_points, 3), dtype=np.float32)
 
         # Initialize camera and viewer
         self.cam = Camera()
@@ -47,19 +54,14 @@ class PointCloudViewerNode(Node):
         self.grid = ShapeGrid(self.ctx)
         self.frame = ShapeFrame(self.ctx)
         self.pyramid = ShapePyramid(self.ctx)
-        self.cloud = ShapePointCloud(self.ctx, 680*480*1)
+        self.cloud = ShapePointCloud(self.ctx, self.size_points)
 
-        # Placeholders for data
-        self.frame_width = 640
-        self.frame_height = 480
-        self.size_points = self.frame_width * self.frame_height
 
         self.array_frames_xyz = torch.zeros((640 * 480, 3), dtype=torch.float32, device="cuda")
         self.array_frames_rgb = torch.zeros((640 * 480, 3), dtype=torch.float32, device="cuda")
 
-
         self.trajectory_points = []
-        self.trajectory = None
+        self.trajectory = ShapeTrajectory(self.ctx, [], color=[0.0, 1.0, 0.0, 0.5])
 
         self.create_subscription(
             PointCloud2,
@@ -88,32 +90,33 @@ class PointCloudViewerNode(Node):
         self.update_pointcloud = msg.data
 
     def trajectory_callback(self, msg):
-        self.trajectory_points = []
+        self.trajectory_points.clear()
         for marker in msg.markers:
-            self.trajectory_points.append([marker.pose.position.x*10, marker.pose.position.y*10, marker.pose.position.z*10]) 
+            self.trajectory_points.append([marker.pose.position.x * 10, marker.pose.position.y * 10, marker.pose.position.z * 10]) 
 
-        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 0.5])
-
+        self.trajectory.update_points(self.trajectory_points)
 
     def pointcloud_callback(self, msg):
         if self.update_pointcloud:
-            self.update_pointcloud = False
             try:
-                cloud_data = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
-                points = np.array(list(cloud_data), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
-                self.array_frames_xyz = torch.tensor(
-                    np.stack((points['x'], points['y'], points['z']), axis=-1),
-                    device="cuda"
-                )
+                cloud_data = list(pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True))
+                points = np.array(cloud_data, dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
+
+                num_points = points.shape[0]
+                if self.array_frames_xyz.shape[0] != num_points:
+                    self.array_frames_xyz = torch.zeros((num_points, 3), dtype=torch.float32, device="cuda")
+                    self.array_frames_rgb = torch.zeros((num_points, 3), dtype=torch.float32, device="cuda")
+
+                np_stack = np.stack((points['x'], points['y'], points['z']), axis=-1)
+                self.array_frames_xyz.copy_(torch.tensor(np_stack, device="cuda"))
 
                 rgb = np.frombuffer(points['rgb'].tobytes(), dtype=np.uint32)
                 r = (rgb & 0x00FF0000) >> 16
                 g = (rgb & 0x0000FF00) >> 8
                 b = (rgb & 0x000000FF)
-                self.array_frames_rgb = torch.tensor(
-                    np.stack((r, g, b), axis=-1) / 255.0,
-                    device="cuda"
-                )
+                np_rgb_stack = np.stack((r, g, b), axis=-1) / 255.0
+                self.array_frames_rgb.copy_(torch.tensor(np_rgb_stack, device="cuda"))
+
             except Exception as e:
                 self.get_logger().error(f"Error processing point cloud: {e}")
 
@@ -166,7 +169,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = PointCloudViewerNode()
 
-    pyglet.clock.schedule_interval(lambda dt: node.spin_once(), 1 / 60.0)
+    pyglet.clock.schedule_interval(lambda dt: node.spin_once(), 1 / 30.0)
     pyglet.clock.schedule_interval(node.update, 1 / 30.0)
 
     try:
