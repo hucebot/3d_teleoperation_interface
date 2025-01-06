@@ -12,8 +12,84 @@ https://docs.ros.org/en/humble/index.html)
 
 
 ## Table of Contents
+- [Repository Overview](#repository-overview)
+- [Get Started](#get-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [From Docker](#from-docker)
+- [Usage](#usage)
+    - [Without ROS2](#without-ros2)
+    - [With ROS2](#with-ros2)
+        - [Save point cloud data](#save-point-cloud-data)
+        - [Visualizer without RViz - PC Recorded](#visualizer-without-rviz---pc-recorded)
+        - [Visualizer without rviz - PC Real Time](#visualizer-without-rviz---pc-real-time)
+        - [Publish trajectory - Fixed data - Testing](#publish-trajectory---fixed-data---testing)
+        - [Publish point cloud data](#publish-point-cloud-data)
+        - [Teleoperation](#teleoperation)
 
 ## Repository Overview
+```plaintext
+.
+├── CMakeLists.txt
+├── config
+│   ├── d435i_calibration.yaml
+│   └── rviz_config.rviz
+├── docker
+│   ├── build_development.sh
+│   ├── deploy.Dockerfile
+│   ├── devel.Dockerfile
+│   └── run_dev_docker.sh
+├── images
+│   ├── line_of_sight.gif
+│   └── trajectory_visualization.gif
+├── launch
+├── LINCESE
+├── models
+│   └── gripper
+│       ├── gripper.20241210-203224.FCBak
+│       ├── gripper.FCStd
+│       └── gripper.obj
+├── package.xml
+├── README.md
+├── resource
+│   └── ros2_3d_interface
+├── ros2_3d_interface
+│   ├── __init__.py
+│   └── utilities
+│       ├── camera.py
+│       ├── __init__.py
+│       ├── __pycache__
+│       │   └── LineGeometry.cpython-310.pyc
+│       ├── shape.py
+│       ├── utils.py
+│       └── viewer.py
+├── scripts
+│   ├── 3d_interface.py
+│   ├── 3d_real_time.py
+│   ├── __init__.py
+│   ├── record_pcl.py
+│   ├── streamdeck.py
+│   ├── trajectory_bridge.py
+│   └── trajectory.py
+├── setup.cfg
+├── src
+│   ├── cloud_separation.cpp
+│   ├── point_cloud_publisher.cpp
+│   ├── trajectory.cpp
+│   └── verify_line_of_sight.cpp
+├── test
+│   ├── test_copyright.py
+│   ├── test_flake8.py
+│   └── test_pep257.py
+└── viewer
+    ├── 3d_viewer.py
+    └── viewer_opengl
+        ├── camera.py
+        ├── __init__.py
+        ├── shape.py
+        ├── utils.py
+        └── viewer.py
+```
 
 # Get Started
 
