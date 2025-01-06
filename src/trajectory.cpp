@@ -29,6 +29,13 @@ public:
             {10.5, -1.0, 0.0}
         };
 
+        for (auto &point : trajectory_)
+        {
+            point[0] /= 10.0;
+            point[1] /= 10.0;
+            point[2] /= 10.0;
+        }
+
         // Publicador de la trayectoria
         trajectory_publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
             "/trajectory_points", 10);
@@ -55,10 +62,10 @@ private:
             marker.pose.position.x = trajectory_[i][0];
             marker.pose.position.y = trajectory_[i][1];
             marker.pose.position.z = trajectory_[i][2];
-            marker.scale.x = 0.05;
-            marker.scale.y = 0.05;
-            marker.scale.z = 0.05;
-            marker.color.a = 1.0; // Opacidad
+            marker.scale.x = 0.02;
+            marker.scale.y = 0.02;
+            marker.scale.z = 0.02;
+            marker.color.a = 1.0;
             marker.color.r = 0.0;
             marker.color.g = 1.0;
             marker.color.b = 0.0;

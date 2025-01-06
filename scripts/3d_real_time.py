@@ -90,9 +90,9 @@ class PointCloudViewerNode(Node):
     def trajectory_callback(self, msg):
         self.trajectory_points = []
         for marker in msg.markers:
-            self.trajectory_points.append([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z]) 
+            self.trajectory_points.append([marker.pose.position.x*10, marker.pose.position.y*10, marker.pose.position.z*10]) 
 
-        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 1.0])
+        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 0.5])
 
 
     def pointcloud_callback(self, msg):
