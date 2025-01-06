@@ -1,0 +1,11 @@
+#### VSCode ####
+.vscode
+log/
+
+#### Python ####
+*.pyc
+__pycache__/
+
+#### Rosbags ####
+rosbag
+*.npz

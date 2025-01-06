@@ -1,0 +1,1 @@
+docker build -t ros2_3d_interface -f devel.Dockerfile .
