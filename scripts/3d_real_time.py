@@ -6,6 +6,7 @@ import numpy as np
 import pyglet
 import rclpy
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2
 from visualization_msgs.msg import MarkerArray, Marker
 import sensor_msgs_py.point_cloud2 as pc2
@@ -28,6 +29,7 @@ class PointCloudViewerNode(Node):
         self.screen_height = screen_height
 
         self.render_pyramid = False
+        self.update_pointcloud = False
 
         # Initialize camera and viewer
         self.cam = Camera()
@@ -45,7 +47,7 @@ class PointCloudViewerNode(Node):
         self.grid = ShapeGrid(self.ctx)
         self.frame = ShapeFrame(self.ctx)
         self.pyramid = ShapePyramid(self.ctx)
-        self.cloud = ShapePointCloud(self.ctx, 640 * 480)
+        self.cloud = ShapePointCloud(self.ctx, 680*480*1)
 
         # Placeholders for data
         self.frame_width = 640
@@ -59,7 +61,6 @@ class PointCloudViewerNode(Node):
         self.trajectory_points = []
         self.trajectory = None
 
-        # Subscribe to PointCloud2 topic
         self.create_subscription(
             PointCloud2,
             '/camera/camera/depth/color/points',
@@ -74,45 +75,55 @@ class PointCloudViewerNode(Node):
             10
         )
 
+        self.create_subscription(
+            Bool,
+            '/update_point_cloud',
+            self.update_pointcloud_callback,
+            10
+        )
+
         self.get_logger().info("Point cloud viewer node initialized")
+
+    def update_pointcloud_callback(self, msg):
+        self.update_pointcloud = msg.data
 
     def trajectory_callback(self, msg):
         self.trajectory_points = []
         for marker in msg.markers:
-            self.trajectory_points.append([marker.pose.position.x * 10, marker.pose.position.y * 10, marker.pose.position.z * 10]) 
-        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points)
-        self.trajectory_color = [0.0, 1.0, 0.0, 1.0]
+            self.trajectory_points.append([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z]) 
+
+        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 1.0])
+
 
     def pointcloud_callback(self, msg):
-        """Callback optimizado para PointCloud2."""
-        try:
-            cloud_data = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
-            points = np.array(list(cloud_data), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
-            self.array_frames_xyz = torch.tensor(
-                np.stack((points['x'], points['y'], points['z']), axis=-1),
-                device="cuda"
-            )
-            rgb = np.frombuffer(points['rgb'].tobytes(), dtype=np.uint32)
-            r = (rgb & 0x00FF0000) >> 16
-            g = (rgb & 0x0000FF00) >> 8
-            b = (rgb & 0x000000FF)
-            self.array_frames_rgb = torch.tensor(
-                np.stack((r, g, b), axis=-1) / 255.0,
-                device="cuda"
-            )
-        except Exception as e:
-            self.get_logger().error(f"Error procesando la nube de puntos: {e}")
+        if self.update_pointcloud:
+            self.update_pointcloud = False
+            try:
+                cloud_data = pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True)
+                points = np.array(list(cloud_data), dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
+                self.array_frames_xyz = torch.tensor(
+                    np.stack((points['x'], points['y'], points['z']), axis=-1),
+                    device="cuda"
+                )
+
+                rgb = np.frombuffer(points['rgb'].tobytes(), dtype=np.uint32)
+                r = (rgb & 0x00FF0000) >> 16
+                g = (rgb & 0x0000FF00) >> 8
+                b = (rgb & 0x000000FF)
+                self.array_frames_rgb = torch.tensor(
+                    np.stack((r, g, b), axis=-1) / 255.0,
+                    device="cuda"
+                )
+            except Exception as e:
+                self.get_logger().error(f"Error processing point cloud: {e}")
 
 
     def update(self, dt):
-        """Update and render the scene."""
         self.viewer.update(dt)
 
-        # Update cloud points and texture
         self.cloud.update_points(array_xyz=self.array_frames_xyz.cpu().numpy())
         self.cloud.update_points(array_rgb=self.array_frames_rgb.cpu().numpy())
 
-        # Clear and render
         self.ctx.screen.use()
         self.ctx.clear(0.3, 0.3, 0.3)
 
@@ -148,7 +159,6 @@ class PointCloudViewerNode(Node):
             )
 
     def spin_once(self):
-        """Spin ROS once."""
         rclpy.spin_once(self, timeout_sec=0.01)
 
 
@@ -156,12 +166,11 @@ def main(args=None):
     rclpy.init(args=args)
     node = PointCloudViewerNode()
 
-    # Schedule the ROS spin in the pyglet clock
     pyglet.clock.schedule_interval(lambda dt: node.spin_once(), 1 / 60.0)
     pyglet.clock.schedule_interval(node.update, 1 / 30.0)
 
     try:
-        pyglet.app.run()  # This will now include ROS spinning
+        pyglet.app.run()
     except KeyboardInterrupt:
         pass
     finally:

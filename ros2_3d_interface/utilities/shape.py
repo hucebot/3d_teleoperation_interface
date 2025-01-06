@@ -6,9 +6,9 @@ from ros2_3d_interface.utilities.utils import (
 )
 
 class ShapeTrajectory():
-    def __init__(self, ctx, points):
+    def __init__(self, ctx, points, color=(1.0, 0.0, 0.0, 1.0)):
         self.ctx = ctx
-        # Program shaders
+        self.color = color
         self.prog = ctx.program(
             vertex_shader="""
                 #version 330 core
@@ -16,31 +16,86 @@ class ShapeTrajectory():
                 in vec3 pos;
                 void main() {
                     gl_Position = mat_proj * vec4(pos, 1.0);
-                    gl_PointSize = 20.0;
                 }
             """,
             fragment_shader="""
                 #version 330 core
+                uniform vec4 color;
                 out vec4 fragment_color;
                 void main() {
-                    fragment_color = vec4(1.0, 0.0, 0.0, 1.0);
+                    fragment_color = color;
                 }
             """,
         )
         self.uniform_mat_proj = self.prog["mat_proj"]
+        self.uniform_color = self.prog["color"]
 
-        self.vbo = ctx.buffer(np.array(points).astype(np.float32).tobytes())
-        self.vao = ctx.vertex_array(self.prog, [(self.vbo, "3f4", "pos")])
+        self.update_points(points)
+
+    def update_points(self, points):
+        if len(points) < 2:
+            self.vbo_lines = None
+            self.vao_lines = None
+            self.vbo_arrows = None
+            self.vao_arrows = None
+            return
+
+        # Generate line segments
+        lines = []
+        arrow_triangles = []
+        arrow_size = 0.4
+        arrow_width = 0.2
+
+        for i in range(len(points) - 1):
+            # Line segment
+            start = np.array(points[i])
+            end = np.array(points[i + 1])
+            lines.extend([start, end])
+
+            # Arrowhead (triangle)
+            direction = end - start
+            direction = direction / np.linalg.norm(direction)
+
+            perp = np.cross(direction, [0, 0, 1])
+            if np.linalg.norm(perp) < 1e-6:
+                perp = np.cross(direction, [0, 1, 0])
+            perp = perp / np.linalg.norm(perp) * arrow_width
+
+            # Define the triangle points
+            tip = end
+            left = end - direction * arrow_size + perp
+            right = end - direction * arrow_size - perp
+            arrow_triangles.extend([tip, left, right])
+
+        # Create VBOs and VAOs for lines and arrowheads
+        self.vbo_lines = self.ctx.buffer(np.array(lines).astype(np.float32).tobytes())
+        self.vao_lines = self.ctx.vertex_array(self.prog, [(self.vbo_lines, "3f4", "pos")])
+
+        self.vbo_arrows = self.ctx.buffer(np.array(arrow_triangles).astype(np.float32).tobytes())
+        self.vao_arrows = self.ctx.vertex_array(self.prog, [(self.vbo_arrows, "3f4", "pos")])
 
     def render(self, cam):
-        self.ctx.point_size = 10.0
-        self.uniform_mat_proj.write(cam.getMatProj().astype("f4"))
-        self.vao.render(mode=moderngl.POINTS)
+        if self.vao_lines:
+            self.uniform_mat_proj.write(cam.getMatProj().astype("f4"))
+            self.uniform_color.value = self.color
+            self.vao_lines.render(mode=moderngl.LINES)
+
+        if self.vao_arrows:
+            self.uniform_mat_proj.write(cam.getMatProj().astype("f4"))
+            self.uniform_color.value = self.color
+            self.vao_arrows.render(mode=moderngl.TRIANGLES)
 
     def release(self):
         self.prog.release()
-        self.vbo.release()
-        self.vao.release()
+        if self.vbo_lines:
+            self.vbo_lines.release()
+        if self.vao_lines:
+            self.vao_lines.release()
+        if self.vbo_arrows:
+            self.vbo_arrows.release()
+        if self.vao_arrows:
+            self.vao_arrows.release()
+
 
 
 class ShapeGrid():
@@ -213,7 +268,7 @@ class ShapePyramid():
 class ShapePointCloud():
     def __init__(self, ctx, size_points):
         self.ctx = ctx
-        #Program shaders
+
         self.prog = ctx.program(
             vertex_shader="""
                 #version 330 core
@@ -241,12 +296,13 @@ class ShapePointCloud():
         self.uniform_mat_proj = self.prog["mat_proj"]
         self.uniform_mat_model = self.prog["mat_model"]
         self.uniform_mat_rotation = self.prog["mat_rotation"]
-        #Generate vertices
+
         array_points_rgb = np.ones((size_points,5))
         array_points_xyz = np.zeros((size_points,5))
-        #Create buffers
+
         self.vbo_rgb = ctx.buffer(array_points_rgb.astype(np.float32).tobytes())
         self.vbo_xyz = ctx.buffer(array_points_xyz.astype(np.float32).tobytes())
+
         self.vao = ctx.vertex_array(self.prog, [(self.vbo_rgb, "3f4", "color"), (self.vbo_xyz, "3f4", "pos")])
     def update_points(self, array_rgb=None, array_xyz=None):
         if array_rgb is not None:

@@ -6,7 +6,10 @@ https://opensource.org/licenses/BSD-3-Clause)
 https://docs.ros.org/en/humble/index.html)
 
 
-<img src=https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/line_of_sight.gif>
+| Verify Line Of Sight                                  | 3D Visualizer of the trajectory                     |
+|-------------------------------------------------------|-----------------------------------------------------|
+| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/line_of_sight.gif" alt="Line of Sight Verification GIF" width="400"> | <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/trajectory_visualization.gif" alt="Trajectory Visualization GIF" width="400"> |
+
 
 ## Table of Contents
 
@@ -68,11 +71,11 @@ There is a ros2 node that visualizes the point cloud data in real time without u
 ros2 run ros2_3d_interface 3d_real_time
 ```
 
-### Separate point cloud data
-There is a ROS2 node that separates the point cloud data into three different point clouds depending on the distance to the camera. To run the node, use the following command:
+### Publish trajectory - Fixed data - Testing
+There is a ros2 node that publish the trajectory that we should follow. To run the node, use the following command:
 
 ```bash
-ros2 run ros2_3d_interface cloud_separation
+ros2 run ros2_3d_interface publish_trajectory
 ```
 
 ### Publish point cloud data

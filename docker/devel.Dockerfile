@@ -1,5 +1,5 @@
 FROM nvidia/opengl:1.2-glvnd-devel-ubuntu22.04
-ENV ROS_DISTRO humble
+ENV ROS_DISTRO=humble
 
 ENV DISPLAY=:0
 ENV LIBGL_ALWAYS_INDIRECT=0
@@ -35,7 +35,9 @@ RUN pip install\
     pynput \
     pyrr \
     tqdm \
-    urdfpy
+    urdfpy \
+    streamdeck \
+    pillow
 
 RUN pip install --upgrade numpy==1.23.5
 
@@ -93,6 +95,16 @@ RUN  apt install -y \
     git \
     libpcap-dev
 
+RUN apt-get install -yy python3-setuptools \
+    && apt-get install -yy python3-pip \
+    && apt-get install -yy python3-dev \
+    && apt-get install -yy libusb-1.0-0-dev \
+    && apt-get install -yy libudev-dev \
+    && apt-get install -yy libhidapi-libusb0 \
+    && apt-get install -yy libjpeg-dev \
+    && apt-get install -yy zlib1g-dev \
+    && apt-get install -yy libopenjp2-7 \
+    && apt-get install -yy libtiff5
 
 ###### Install TORCH
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118

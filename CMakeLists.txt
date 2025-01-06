@@ -65,10 +65,13 @@ install(PROGRAMS
   scripts/3d_real_time.py
   scripts/line_of_sight.py
   scripts/trajectory.py
+  scripts/streamdeck.py
+  scripts/trajectory_bridge.py
   ros2_3d_interface/utilities/camera.py
   ros2_3d_interface/utilities/shape.py
   ros2_3d_interface/utilities/utils.py
   ros2_3d_interface/utilities/viewer.py
+  ros2_3d_interface/utilities/gui_assets.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
