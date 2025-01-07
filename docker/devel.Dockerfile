@@ -61,19 +61,22 @@ RUN apt install -y \
     ros-${ROS_DISTRO}-rviz-imu-plugin \
     ros-${ROS_DISTRO}-librealsense2*
 
-####### Install ROS2 Realsense
+####### Install Orbbec SDK
 RUN apt install -y git
 RUN mkdir -p /ros2_ws/src
 WORKDIR /ros2_ws/src
-RUN git clone https://github.com/IntelRealSense/realsense-ros.git -b ros2-master
+RUN git clone https://github.com/orbbec/OrbbecSDK_ROS2.git
 WORKDIR /ros2_ws
 RUN rosdep install -i --from-path src --rosdistro ${ROS_DISTRO} --skip-keys=librealsense2 -y
 
-RUN apt install -y libgflags-dev nlohmann-json3-dev  \
-    ros-${ROS_DISTRO}-image-transport ros-${ROS_DISTRO}-image-publisher ros-${ROS_DISTRO}-camera-info-manager \
-    ros-${ROS_DISTRO}-diagnostic-updater ros-${ROS_DISTRO}-diagnostic-msgs ros-${ROS_DISTRO}-statistics-msgs \
-    ros-${ROS_DISTRO}-backward-ros libdw-dev
-
+RUN apt install libgflags-dev nlohmann-json3-dev  \
+    ros-$ROS_DISTRO-image-transport  ros-${ROS_DISTRO}-image-transport-plugins ros-${ROS_DISTRO}-compressed-image-transport \
+    ros-$ROS_DISTRO-image-publisher ros-$ROS_DISTRO-camera-info-manager \
+    ros-$ROS_DISTRO-diagnostic-updater ros-$ROS_DISTRO-diagnostic-msgs ros-$ROS_DISTRO-statistics-msgs \
+    ros-$ROS_DISTRO-backward-ros libdw-dev
+    
+RUN source /opt/ros/$ROS_DISTRO/setup.bash && \
+    colcon build --event-handlers console_direct+ --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ###### Install Dependencies
 RUN  apt install -y \

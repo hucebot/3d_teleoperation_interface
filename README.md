@@ -79,10 +79,10 @@ ros2 run ros2_3d_interface publish_trajectory
 ```
 
 ### Publish point cloud data
-To publish the point cloud data, it will depent on the camera you are using. For the Intel RealSense D435i, you can use the following command:
+To publish the point cloud data, it will depent on the camera you are using. For the Orbbec Astra camera (Femto Bolt), use the following command:
 
 ```bash
-ros2 launch realsense2_camera rs_launch.py depth_module.depth_profile:=1280x720x30 pointcloud.enable:=true enable_rgbd:=true align_depth.enable:=true enable_sync:=true enable_depth:=true enable_color:=true
+ros2 launch orbbec_camera femto_bolt.launch.py -enable_point_cloud:=true enable_colored_point_cloud:=true
 ```
 
 ### Teleoperation

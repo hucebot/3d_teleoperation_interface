@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import os, moderngl, rclpy, pyglet, torch, datetime
+import os, moderngl, rclpy, pyglet, datetime
+import struct
 
 import numpy as np
+import open3d as o3d
 
 from rclpy.node import Node
 from std_msgs.msg import Bool
@@ -23,109 +25,87 @@ from ros2_3d_interface.utilities.utils import (
 class PointCloudViewerNode(Node):
     def __init__(self, screen_width=1240, screen_height=720):
         super().__init__('pointcloud_viewer_node')
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.get_logger().warn(f"Using device: {self.device}")
+
+        self.render_pyramid = False
 
         self.screen_width = screen_width
         self.screen_height = screen_height
-
-        self.render_pyramid = False
-        self.update_pointcloud = True
-
-        # Placeholders for data
         self.frame_width = 640
         self.frame_height = 480
-        self.size_points = self.frame_width * self.frame_height
-        self.cloud_data = np.zeros((self.size_points, 3), dtype=np.float32)
+        self.size_points = self.frame_width * self.frame_height * 2
 
-        # Initialize camera and viewer
+        self.array_frames_xyz = np.zeros((self.size_points, 3), dtype=np.float32)
+        self.array_frames_rgb = np.zeros((self.size_points, 3), dtype=np.float32)
+
+        self.cloud_data = np.zeros((self.size_points, 4), dtype=np.float32)
+        self.rgb_buffer = np.zeros((self.size_points,), dtype=np.uint32)
+        self.xyz_buffer = np.zeros((self.size_points,), dtype=np.uint32)
+
+
         self.cam = Camera()
         self.cam.setParams(45.0, (0, 0, self.screen_width, self.screen_height))
         self.cam.setTargetPos([5.0, 0.0, 0.0])
         self.cam.setEyePos([-10.0, -10.0, 5.0])
         self.viewer = Viewer(self.screen_width, self.screen_height, self.cam)
 
-        # OpenGL context
         self.ctx = moderngl.create_context()
         self.ctx.enable(moderngl.BLEND | moderngl.DEPTH_TEST)
         self.ctx.enable(moderngl.PROGRAM_POINT_SIZE)
 
-        # Initialize drawing primitives
         self.grid = ShapeGrid(self.ctx)
         self.frame = ShapeFrame(self.ctx)
         self.pyramid = ShapePyramid(self.ctx)
         self.cloud = ShapePointCloud(self.ctx, self.size_points)
 
-
-        self.array_frames_xyz = torch.zeros((640 * 480, 3), dtype=torch.float32, device="cuda")
-        self.array_frames_rgb = torch.zeros((640 * 480, 3), dtype=torch.float32, device="cuda")
-
-        self.trajectory_points = []
-        self.trajectory = ShapeTrajectory(self.ctx, [], color=[0.0, 1.0, 0.0, 0.5])
-
         self.create_subscription(
             PointCloud2,
-            '/camera/camera/depth/color/points',
+            '/camera/depth_registered/points',
             self.pointcloud_callback,
             10
         )
 
-        self.create_subscription(
-            MarkerArray,
-            '/trajectory_points',
-            self.trajectory_callback,
-            10
-        )
-
-        self.create_subscription(
-            Bool,
-            '/update_point_cloud',
-            self.update_pointcloud_callback,
-            10
-        )
+        self.pub_cloud = self.create_publisher(PointCloud2, 'republished_cloud', 10)
 
         self.get_logger().info("Point cloud viewer node initialized")
 
-    def update_pointcloud_callback(self, msg):
-        self.update_pointcloud = msg.data
-
-    def trajectory_callback(self, msg):
-        self.trajectory_points.clear()
-        for marker in msg.markers:
-            self.trajectory_points.append([marker.pose.position.x * 10, marker.pose.position.y * 10, marker.pose.position.z * 10]) 
-
-        self.trajectory.update_points(self.trajectory_points)
-
     def pointcloud_callback(self, msg):
-        if self.update_pointcloud:
-            try:
-                cloud_data = list(pc2.read_points(msg, field_names=("x", "y", "z", "rgb"), skip_nans=True))
-                points = np.array(cloud_data, dtype=[('x', np.float32), ('y', np.float32), ('z', np.float32), ('rgb', np.float32)])
+        num_points = msg.width * msg.height
 
-                num_points = points.shape[0]
-                if self.array_frames_xyz.shape[0] != num_points:
-                    self.array_frames_xyz = torch.zeros((num_points, 3), dtype=torch.float32, device="cuda")
-                    self.array_frames_rgb = torch.zeros((num_points, 3), dtype=torch.float32, device="cuda")
+        cloud_arr = np.frombuffer(
+            msg.data,
+            dtype=[
+                ("x",    np.float32),
+                ("y",    np.float32),
+                ("z",    np.float32),
+                ("_pad", np.float32),
+                ("rgb",  np.float32),
+            ],
+            count=num_points
+        )
 
-                np_stack = np.stack((points['x'], points['y'], points['z']), axis=-1)
-                self.array_frames_xyz.copy_(torch.tensor(np_stack, device="cuda"))
+        xyz = np.column_stack((cloud_arr["x"], cloud_arr["y"], cloud_arr["z"]))
 
-                rgb = np.frombuffer(points['rgb'].tobytes(), dtype=np.uint32)
-                r = (rgb & 0x00FF0000) >> 16
-                g = (rgb & 0x0000FF00) >> 8
-                b = (rgb & 0x000000FF)
-                np_rgb_stack = np.stack((r, g, b), axis=-1) / 255.0
-                self.array_frames_rgb.copy_(torch.tensor(np_rgb_stack, device="cuda"))
+        republished_msg = pc2.create_cloud_xyz32(msg.header, xyz)
 
-            except Exception as e:
-                self.get_logger().error(f"Error processing point cloud: {e}")
+        self.pub_cloud.publish(republished_msg)
+
+        rgb = cloud_arr["rgb"].view(np.uint32)
+        r = (rgb & 0x00FF0000) >> 16
+        g = (rgb & 0x0000FF00) >> 8
+        b = (rgb & 0x000000FF)
+        rgb = np.column_stack((r, g, b)).astype(np.float32) / 255.0
+
+        self.array_frames_xyz = xyz
+        self.array_frames_rgb = rgb
 
 
     def update(self, dt):
         self.viewer.update(dt)
 
-        self.cloud.update_points(array_xyz=self.array_frames_xyz.cpu().numpy())
-        self.cloud.update_points(array_rgb=self.array_frames_rgb.cpu().numpy())
+        self.cloud.update_points(
+            array_xyz=self.array_frames_xyz,
+            array_rgb=self.array_frames_rgb
+        )
 
         self.ctx.screen.use()
         self.ctx.clear(0.3, 0.3, 0.3)
@@ -138,8 +118,6 @@ class PointCloudViewerNode(Node):
             scale=1.0
         )
 
-        far = 5.0
-        fovx = 60.0
         self.cloud.render(
             self.cam,
             pos=[0.0, 0.0, 1.0],
@@ -147,22 +125,20 @@ class PointCloudViewerNode(Node):
             scale=10.0
         )
 
-        if self.trajectory is not None:
-            self.trajectory.render(self.cam)
-
         if self.render_pyramid:
             self.pyramid.render(
                 self.cam,
                 pos=[0.0, 0.0, 0.0],
                 rot=RotIdentity(),
-                fovx=fovx,
+                fovx=60.0,
                 aspect=self.screen_width / self.screen_height,
-                far=far,
+                far=5.0,
                 color=[1.0, 1.0, 1.0, 1.0]
             )
 
     def spin_once(self):
         rclpy.spin_once(self, timeout_sec=0.01)
+
 
 
 def main(args=None):
