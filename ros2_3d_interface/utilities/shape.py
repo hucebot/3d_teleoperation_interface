@@ -43,8 +43,8 @@ class ShapeTrajectory():
         # Generate line segments
         lines = []
         arrow_triangles = []
-        arrow_size = 0.4
-        arrow_width = 0.2
+        arrow_size = 0.02
+        arrow_width = 0.01
 
         for i in range(len(points) - 1):
             # Line segment
@@ -95,8 +95,6 @@ class ShapeTrajectory():
             self.vbo_arrows.release()
         if self.vao_arrows:
             self.vao_arrows.release()
-
-
 
 class ShapeGrid():
     def __init__(self, ctx, length=10.0, segments=10):
@@ -180,7 +178,7 @@ class ShapeFrame():
         self.vbo = ctx.buffer(np.array(list_data).astype(np.float32).tobytes())
         self.vao = ctx.vertex_array(self.prog, [(self.vbo, "3f4 3f4", "pos", "color")])
     def render(self, cam, pos=VectZero(), rot=RotIdentity(), scale=1.0):
-        self.ctx.line_width = 5.0
+        self.ctx.line_width = 3.0
         mat_model = MatModel(pos, rot, scale*VectOne())
         self.uniform_mat_proj.write(cam.getMatProj().astype("f4"))
         self.uniform_mat_model.write(mat_model.astype("f4"))
@@ -281,7 +279,7 @@ class ShapePointCloud():
                 void main() {
                     gl_Position = mat_proj * mat_model * mat_rotation * vec4(pos, 1.0);
                     vertex_color = color;
-                    gl_PointSize = 3;
+                    gl_PointSize = 1.0;
                 }
             """,
             fragment_shader="""
@@ -397,4 +395,3 @@ class ShapeQuadTexture():
         self.prog.release()
         self.vbo.release()
         self.vao.release()
-

@@ -1,0 +1,19 @@
+3d_viewer:
+  window_name: "3D Viewer"
+  window_width: 1240
+  window_height: 720
+  point_cloud_width: 640
+  point_cloud_height: 480
+  point_cloud_size_multiplier: 2
+  render_pyramid: false
+  render_trajectory: true
+  fov: 90
+  render_hz: 60
+  camera_velocity: 1.0
+  point_cloud_topic: "/camera/depth_registered/points"
+  
+trajectory:
+  trajectory_points_topic: "/trajectory_points"
+  dummy_trajectory: true
+
+  
