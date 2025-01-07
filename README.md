@@ -117,7 +117,7 @@ sh run_dev_docker.sh
 To publish the point cloud data, it will depent on the camera you are using. For the Orbbec camera (Femto Bolt), use the following command:
 
 ```bash
-ros2 launch orbbec_camera femto_bolt.launch.py -enable_point_cloud:=true enable_colored_point_cloud:=true
+ros2 launch orbbec_camera femto_bolt.launch.py enable_point_cloud:=true enable_colored_point_cloud:=true
 ```
 
 ## 3D Visualizer
