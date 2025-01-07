@@ -62,7 +62,7 @@ install(TARGETS
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/3d_real_time.py
+  scripts/3d_viewer.py
   scripts/trajectory.py
   scripts/streamdeck.py
   scripts/trajectory_bridge.py
