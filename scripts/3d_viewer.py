@@ -5,7 +5,7 @@ import moderngl, rclpy, pyglet
 import numpy as np
 
 from rclpy.node import Node
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, Image
 from visualization_msgs.msg import MarkerArray
 
 
@@ -25,6 +25,8 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('window_name', '3D Viewer')
         self.declare_parameter('window_width', 640)
         self.declare_parameter('window_height', 480)
+        self.declare_parameter('rgb_image_width', 640)
+        self.declare_parameter('rgb_image_height', 480)
         self.declare_parameter('point_cloud_width', 640)
         self.declare_parameter('point_cloud_height', 480)
         self.declare_parameter('point_cloud_size_multiplier', 2)
@@ -35,6 +37,10 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('camera_velocity', 1.0)
         self.declare_parameter('point_cloud_topic', '/camera/depth_registered/points')
         self.declare_parameter('trajectory_points_topic', '/trajectory_points')
+        self.declare_parameter('camera_image_topic', '/camera/color/image_raw')
+
+        self.rgb_image_width = self.get_parameter('rgb_image_width').get_parameter_value().integer_value
+        self.rgb_image_height = self.get_parameter('rgb_image_height').get_parameter_value().integer_value
 
         self.render_pyramid = self.get_parameter('render_pyramid').get_parameter_value().bool_value
         self.render_trajectory = self.get_parameter('render_trajectory').get_parameter_value().bool_value
@@ -87,13 +93,23 @@ class PointCloudViewerNode(Node):
         self.create_subscription(
             MarkerArray,
             self.get_parameter('trajectory_points_topic').get_parameter_value().string_value,
-            self.trajectory_callback,
+            self.trajectory_cb,
+            10
+        )
+
+        self.create_subscription(
+            Image,
+            self.get_parameter('camera_image_topic').get_parameter_value().string_value,
+            self.camera_image_cb,
             10
         )
 
         self.get_logger().info("3D Viewer is Ready")
 
-    def trajectory_callback(self, msg):
+    def camera_image_cb(self, msg):
+        pass
+
+    def trajectory_cb(self, msg):
         self.trajectory_points = []
         for marker in msg.markers:
             self.trajectory_points.append([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z]) 
@@ -177,7 +193,7 @@ class PointCloudViewerNode(Node):
         rclpy.spin_once(self, timeout_sec=0.01)
 
 
-def main(args=None):
+def main(args=None):    
     rclpy.init(args=args)
     node = PointCloudViewerNode()
 
