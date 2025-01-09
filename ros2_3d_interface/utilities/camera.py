@@ -57,28 +57,15 @@ class Camera():
         self.eye_y = self.target_y + eye_radius*np.sin(eye_angle1)*np.sin(eye_angle2)
         self.eye_z = self.target_z + eye_radius*np.cos(eye_angle2)
     def getMatProj(self):
-        near = 0.01
-        far = 1000.0
-        right = near * np.tan(np.radians(self.getFovx()) / 2)
-        left = -right
-        top = -near * np.tan(np.radians(self.getFovy()) / 2)
-        bottom = -top
-
-        mat_proj = Matrix44.perspective_projection_bounds(
-            left=left,
-            right=right,
-            bottom=bottom,
-            top=top,
-            near=near,
-            far=far
-        )
-
+        mat_proj = Matrix44.perspective_projection(
+            fovy=self.getFovy(), 
+            aspect=self.getAspect(),
+            near=0.01, 
+            far=1000.0)
         mat_view = Matrix44.look_at(
             eye=self.getEyePos(),
             target=self.getTargetPos(),
-            up=[0.0, 0.0, 1.0]
-        )
-
+            up=[0.0, 0.0, 1.0])
         return mat_proj * mat_view
 
     def getProjPlanePos(self, dist):

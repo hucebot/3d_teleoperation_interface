@@ -44,6 +44,8 @@ def generate_nodes(config_file):
     visualizer_width = config_file['3d_viewer']['rgb_image']['visualizer_width']
     visualizer_height = config_file['3d_viewer']['rgb_image']['visualizer_height']
 
+    use_streamdeck = config_file['3d_viewer']['streamdeck']['use_streamdeck']
+
     reset_view_topic = config_file['3d_viewer']['streamdeck']['reset_view_topic']
 
     point_cloud_width = config_file['3d_viewer']['point_cloud']['width']
@@ -57,6 +59,8 @@ def generate_nodes(config_file):
     # Trajectory parameters
     trajectory_points_topic = config_file['trajectory']['trajectory_points_topic']
     dummy_trajectory = config_file['trajectory']['dummy_trajectory']
+
+    node_list = []
 
     visualizer_node = Node(
         package='ros2_3d_interface',
@@ -97,6 +101,23 @@ def generate_nodes(config_file):
         ]
     )
 
+    node_list.append(visualizer_node)
+
+    if use_streamdeck:
+        streamdeck_node = Node(
+            package='ros2_3d_interface',
+            executable='streamdeck.py',
+            name='streamdeck',
+            output='screen',
+            parameters=[
+                {
+                    'reset_view_topic': reset_view_topic
+                }
+            ]
+        )
+
+        node_list.append(streamdeck_node)
+
     if dummy_trajectory:
         dummy_trajectory_node = Node(
             package='ros2_3d_interface',
@@ -110,7 +131,6 @@ def generate_nodes(config_file):
             ]
         )
 
-        return [visualizer_node, dummy_trajectory_node]
+        node_list.append(dummy_trajectory_node)
 
-    else:
-        return [visualizer_node]
+    return node_list

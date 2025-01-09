@@ -5,16 +5,17 @@
     width: 1240
     height: 720
     render_pyramid: false
-    render_trajectory: false
+    render_trajectory: true
     render_image: true
     resizable: true
     render_hz: 60
     camera_velocity: 0.01
-    camera_x: 0.06359021
-    camera_y: 0.00388795
-    camera_z: -0.00440227
+    camera_x: 0.00737444
+    camera_y: 0.01639194
+    camera_z: -0.00236817
 
   streamdeck:
+    use_streamdeck: true
     reset_view_topic: "/streamdeck/reset_view"
 
   rgb_image:
@@ -33,8 +34,8 @@
     height: 576
     size_multiplier: 2
     point_size: 3
-    hfov: 75
-    vfov: 65
+    hfov: 100
+    vfov: 100
     topic: "/camera/depth_registered/points" 
   
 trajectory:

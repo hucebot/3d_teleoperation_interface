@@ -113,7 +113,7 @@ class ShapeGrid():
                 #version 330 core
                 out vec4 fragment_color;
                 void main() {
-                    fragment_color = vec4(1.0, 1.0, 1.0, 1.0);
+                    fragment_color = vec4(1.0, 1.0, 1.0, 0.5);
                 }
             """,
         )
@@ -121,11 +121,11 @@ class ShapeGrid():
         #Generate vertices
         list_vertex = []
         for x in np.linspace(-length, length, 2*segments+1):
-            list_vertex += [x, length, 0.0]
-            list_vertex += [x, -length, 0.0]
+            list_vertex += [x, length, -1.0]
+            list_vertex += [x, -length, -1.0]
         for y in np.linspace(-length, length, 2*segments+1):
-            list_vertex += [length, y, 0.0]
-            list_vertex += [-length, y, 0.0]
+            list_vertex += [length, y, -1.0]
+            list_vertex += [-length, y, -1.0]
         #Create buffers
         self.vbo = ctx.buffer(np.array(list_vertex).astype(np.float32).tobytes())
         self.vao = ctx.vertex_array(self.prog, [(self.vbo, "3f4", "pos")])

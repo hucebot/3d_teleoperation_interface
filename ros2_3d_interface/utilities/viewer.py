@@ -31,30 +31,32 @@ class Viewer():
         eye_radius, eye_angle1, eye_angle2 = self.cam.getEyePolar()
         vect = np.array([0.0, 0.0, 0.0])
 
+        # Movimiento de cámara
         view_x = -np.cos(eye_angle1)
         view_y = -np.sin(eye_angle1)
-  
-        if self.keys[key.UP] or self.keys[key.W] and not self.keys[key.LSHIFT]:
-            vect[0] += self.cam_velocity*dt*view_x
-            vect[1] += self.cam_velocity*dt*view_y
-        if self.keys[key.DOWN] or self.keys[key.S] and not self.keys[key.LSHIFT]:
-            vect[0] -= self.cam_velocity*dt*view_x
-            vect[1] -= self.cam_velocity*dt*view_y
+        if (self.keys[key.UP] or self.keys[key.W]) and not self.keys[key.LSHIFT]:
+            vect[0] += self.cam_velocity * dt * view_x
+            vect[1] += self.cam_velocity * dt * view_y
+        if (self.keys[key.DOWN] or self.keys[key.S]) and not self.keys[key.LSHIFT]:
+            vect[0] -= self.cam_velocity * dt * view_x
+            vect[1] -= self.cam_velocity * dt * view_y
         if self.keys[key.LEFT] or self.keys[key.A]:
-            vect[0] -= self.cam_velocity*dt*view_y
-            vect[1] += self.cam_velocity*dt*view_x
+            vect[0] -= self.cam_velocity * dt * view_y
+            vect[1] += self.cam_velocity * dt * view_x
         if self.keys[key.RIGHT] or self.keys[key.D]:
-            vect[0] += self.cam_velocity*dt*view_y
-            vect[1] -= self.cam_velocity*dt*view_x
+            vect[0] += self.cam_velocity * dt * view_y
+            vect[1] -= self.cam_velocity * dt * view_x
         if self.keys[key.LSHIFT] and self.keys[key.W]:
-            vect[2] += self.cam_velocity*dt
+            vect[2] += self.cam_velocity * dt
         if self.keys[key.LSHIFT] and self.keys[key.S]:
-            vect[2] -= self.cam_velocity*dt
-        self.cam.setEyePos(self.cam.getEyePos()+vect)
-        self.cam.setTargetPos(self.cam.getTargetPos()+vect)
-        
+            vect[2] -= self.cam_velocity * dt
+
+        self.cam.setEyePos(self.cam.getEyePos() + vect)
+        self.cam.setTargetPos(self.cam.getTargetPos() + vect)
+
         if self.keys[key.ESCAPE]:
             pyglet.app.exit()
+
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if buttons & mouse.LEFT:

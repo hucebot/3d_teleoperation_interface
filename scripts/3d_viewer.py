@@ -208,13 +208,15 @@ class PointCloudViewerNode(Node):
             self.ctx.screen.use()
             self.ctx.clear(0.3, 0.3, 0.3)
 
-            # self.grid.render(self.cam)
-            # self.frame.render(
-            #     self.cam,
-            #     pos=[0.0, 0.0, 0.0],
-            #     rot=RotIdentity(),
-            #     scale=0.3
-            # )
+            self.grid.render(
+                self.cam
+            )
+            self.frame.render(
+                self.cam,
+                pos=[0.0, 0.0, -1.0],
+                rot=RotIdentity(),
+                scale=0.3
+            )
 
             if self.trajectory is not None and self.render_trajectory:
                 self.trajectory.render(self.cam)
