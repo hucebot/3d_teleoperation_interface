@@ -44,6 +44,8 @@ def generate_nodes(config_file):
     visualizer_width = config_file['3d_viewer']['rgb_image']['visualizer_width']
     visualizer_height = config_file['3d_viewer']['rgb_image']['visualizer_height']
 
+    reset_view_topic = config_file['3d_viewer']['streamdeck']['reset_view_topic']
+
     point_cloud_width = config_file['3d_viewer']['point_cloud']['width']
     point_cloud_height = config_file['3d_viewer']['point_cloud']['height']
     point_cloud_size_multiplier = config_file['3d_viewer']['point_cloud']['size_multiplier']
@@ -83,6 +85,7 @@ def generate_nodes(config_file):
                 'render_pyramid': render_pyramid,
                 'render_trajectory': render_trajectory,
                 'render_image': render_image,
+                'reset_view_topic': reset_view_topic,
                 'hfov': hfov,
                 'vfov': vfov,
                 'render_hz': render_hz,

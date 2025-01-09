@@ -2,6 +2,7 @@ import pyglet
 from pyglet.window import key
 from pyglet.window import mouse
 import numpy as np
+from pyglet.gl import glEnable, GL_BLEND, glBlendFunc, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
 
 class Viewer():
     def __init__(self, screen_width, screen_height, cam, title, cam_velocity):
@@ -18,6 +19,14 @@ class Viewer():
 
         self.window.push_handlers(self.on_mouse_drag)
         self.window.push_handlers(self.on_mouse_scroll)
+        self.window.push_handlers(self.on_resize)
+
+    def on_resize(self, width, height):
+        self.screen_width = width
+        self.screen_height = height
+
+        return pyglet.event.EVENT_HANDLED
+
     def update(self, dt):
         eye_radius, eye_angle1, eye_angle2 = self.cam.getEyePolar()
         vect = np.array([0.0, 0.0, 0.0])
@@ -46,6 +55,7 @@ class Viewer():
         
         if self.keys[key.ESCAPE]:
             pyglet.app.exit()
+
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if buttons & mouse.LEFT:
             eye_radius, eye_angle1, eye_angle2 = self.cam.getEyePolar()
@@ -62,4 +72,3 @@ class Viewer():
         if eye_radius < 0.02:
             eye_radius = 0.02
         self.cam.setEyePolar(eye_radius, eye_angle1, eye_angle2)
-

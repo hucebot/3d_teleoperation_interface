@@ -17,8 +17,7 @@ class StreamDeckController(Node):
         super().__init__('stream_deck_controller')
         self.exit_loop = False
 
-        self.update_point_cloud = False
-        self.update_point_cloud_publisher = self.create_publisher(Bool, '/update_point_cloud', 10)
+        self.reset_view_publisher = self.create_publisher(Bool, '/streamdeck/reset_view', 10)
         self.rate = 0.1
 
         self.key_width = 100
@@ -57,13 +56,13 @@ class StreamDeckController(Node):
 
     def on_key_change(self, deck, key, state):
         if state:
-            if key == self.update_point_cloud_button_position:
-                self.update_point_cloud = True
-                self.update_point_cloud_publisher.publish(Bool(data=True))
-                self.create_button(self.update_point_cloud_button_position, "Update Point Cloud", self.background_color_active)
+            if key == self.reset_view_position_button:
+                self.reset_view_publisher.publish(Bool(data=True))
+                self.create_button(self.reset_view_position_button, "Update Point Cloud", self.background_color_active)
 
         else:
-            self.create_button(self.update_point_cloud_button_position, "Update Point Cloud", self.background_color_inactive)
+            self.create_button(self.reset_view_position_button, "Update Point Cloud", self.background_color)
+            self.reset_view_publisher.publish(Bool(data=False))
 
     def create_button(self, position, label, background_color):
         image = self.background_image.copy()
@@ -106,10 +105,10 @@ class StreamDeckController(Node):
 
 
     def initialize_buttons(self):
-        #### Update Point Cloud Button
-        self.update_point_cloud_button_position = (0, 0)
-        self.update_point_cloud_button_position = self.update_point_cloud_button_position[0] * self.row + self.update_point_cloud_button_position[1]
-        self.update_point_cloud_button = self.create_button(self.update_point_cloud_button_position, "Update Point Cloud", self.background_color)
+        #### Reset View Button
+        self.reset_view_position_button = (0, 0)
+        self.reset_view_position_button = self.reset_view_position_button[0] * self.row + self.reset_view_position_button[1]
+        self.reset_view_button = self.create_button(self.reset_view_position_button, "Reset View Button", self.background_color)
 
 
 if __name__ == '__main__':

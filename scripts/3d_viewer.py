@@ -7,7 +7,7 @@ import numpy as np
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, Image
 from visualization_msgs.msg import MarkerArray
-
+from std_msgs.msg import Bool
 
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
@@ -49,6 +49,7 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('point_cloud_topic', '/camera/depth_registered/points')
         self.declare_parameter('trajectory_points_topic', '/trajectory_points')
         self.declare_parameter('rgb_image_topic', '/camera/color/image_raw')
+        self.declare_parameter('reset_view_topic', '/streamdeck/reset_view')
 
         self.render_pyramid = self.get_parameter('render_pyramid').get_parameter_value().bool_value
         self.render_trajectory = self.get_parameter('render_trajectory').get_parameter_value().bool_value
@@ -99,6 +100,8 @@ class PointCloudViewerNode(Node):
             cam_velocity=self.get_parameter('camera_velocity').get_parameter_value().double_value
         )
 
+        self.viewer.on_reset_camera = self.reset_camera
+
         self.ctx = moderngl.create_context()
         self.ctx.enable(moderngl.BLEND | moderngl.DEPTH_TEST)
         self.ctx.enable(moderngl.PROGRAM_POINT_SIZE)
@@ -113,6 +116,10 @@ class PointCloudViewerNode(Node):
 
         self.trajectory_points = []
         self.trajectory = None
+
+        self.initial_eye = np.array([self.camera_x, self.camera_y, self.camera_z], dtype=np.float32)
+        self.initial_target = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+
 
         self.create_subscription(
             PointCloud2,
@@ -135,7 +142,18 @@ class PointCloudViewerNode(Node):
             10
         )
 
+        self.create_subscription(
+            Bool,
+            self.get_parameter('reset_view_topic').get_parameter_value().string_value,
+            lambda msg: self.reset_camera(),
+            10
+        )
+
         self.get_logger().info("3D Viewer is Ready")
+
+    def reset_camera(self):
+        self.cam.setEyePos(self.initial_eye)
+        self.cam.setTargetPos(self.initial_target)
 
     def camera_image_cb(self, msg):
         self.actual_image = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, 3))
@@ -180,7 +198,7 @@ class PointCloudViewerNode(Node):
         try:
             self.viewer.update(dt)
             
-            #self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
+            self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
 
             self.cloud.update_points(
                 array_xyz=self.array_frames_xyz,
@@ -190,13 +208,13 @@ class PointCloudViewerNode(Node):
             self.ctx.screen.use()
             self.ctx.clear(0.3, 0.3, 0.3)
 
-            self.grid.render(self.cam)
-            self.frame.render(
-                self.cam,
-                pos=[0.0, 0.0, 0.0],
-                rot=RotIdentity(),
-                scale=0.3
-            )
+            # self.grid.render(self.cam)
+            # self.frame.render(
+            #     self.cam,
+            #     pos=[0.0, 0.0, 0.0],
+            #     rot=RotIdentity(),
+            #     scale=0.3
+            # )
 
             if self.trajectory is not None and self.render_trajectory:
                 self.trajectory.render(self.cam)
