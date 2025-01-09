@@ -25,32 +25,42 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('window_name', '3D Viewer')
         self.declare_parameter('window_width', 640)
         self.declare_parameter('window_height', 480)
+        self.declare_parameter('camera_x', 0.03886509)
+        self.declare_parameter('camera_y', 0.00772565)
+        self.declare_parameter('camera_z', 0.00450755)
         self.declare_parameter('rgb_image_width', 640)
         self.declare_parameter('rgb_image_height', 480)
         self.declare_parameter('point_cloud_width', 640)
         self.declare_parameter('point_cloud_height', 480)
         self.declare_parameter('point_cloud_size_multiplier', 2)
+        self.declare_parameter('point_size', 1)
         self.declare_parameter('render_pyramid', False)
         self.declare_parameter('render_trajectory', True)
-        self.declare_parameter('fov', 90)
+        self.declare_parameter('hfov', 90)
+        self.declare_parameter('vfov', 90)
         self.declare_parameter('render_hz', 60)
         self.declare_parameter('camera_velocity', 1.0)
         self.declare_parameter('point_cloud_topic', '/camera/depth_registered/points')
         self.declare_parameter('trajectory_points_topic', '/trajectory_points')
-        self.declare_parameter('camera_image_topic', '/camera/color/image_raw')
-
-        self.rgb_image_width = self.get_parameter('rgb_image_width').get_parameter_value().integer_value
-        self.rgb_image_height = self.get_parameter('rgb_image_height').get_parameter_value().integer_value
+        self.declare_parameter('rgb_image_topic', '/camera/color/image_raw')
 
         self.render_pyramid = self.get_parameter('render_pyramid').get_parameter_value().bool_value
         self.render_trajectory = self.get_parameter('render_trajectory').get_parameter_value().bool_value
+        self.point_size_point_cloud = self.get_parameter('point_size').get_parameter_value().integer_value
 
         self.screen_width = self.get_parameter('window_width').get_parameter_value().integer_value
         self.screen_height = self.get_parameter('window_height').get_parameter_value().integer_value
-        self.frame_width = self.get_parameter('point_cloud_width').get_parameter_value().integer_value
-        self.frame_height = self.get_parameter('point_cloud_height').get_parameter_value().integer_value
-        self.fov = self.get_parameter('fov').get_parameter_value().integer_value
-        self.size_points = self.frame_width * self.frame_height * self.get_parameter('point_cloud_size_multiplier').get_parameter_value().integer_value
+        
+        self.rgb_image_width = self.get_parameter('rgb_image_width').get_parameter_value().integer_value
+        self.rgb_image_height = self.get_parameter('rgb_image_height').get_parameter_value().integer_value
+
+        self.depth_frame_width = self.get_parameter('point_cloud_width').get_parameter_value().integer_value
+        self.depth_frame_height = self.get_parameter('point_cloud_height').get_parameter_value().integer_value
+        
+        self.hfov = self.get_parameter('hfov').get_parameter_value().integer_value
+        self.vfov = self.get_parameter('vfov').get_parameter_value().integer_value
+
+        self.size_points = self.depth_frame_width * self.depth_frame_height * self.get_parameter('point_cloud_size_multiplier').get_parameter_value().integer_value
 
         self.array_frames_xyz = np.zeros((self.size_points, 3), dtype=np.float32)
         self.array_frames_rgb = np.zeros((self.size_points, 3), dtype=np.float32)
@@ -60,9 +70,14 @@ class PointCloudViewerNode(Node):
         self.xyz_buffer = np.zeros((self.size_points,), dtype=np.uint32)
 
         self.cam = Camera()
-        self.cam.setParams(self.fov, (0, 0, self.screen_width, self.screen_height))
+
+        self.camera_x = self.get_parameter('camera_x').get_parameter_value().double_value
+        self.camera_y = self.get_parameter('camera_y').get_parameter_value().double_value
+        self.camera_z = self.get_parameter('camera_z').get_parameter_value().double_value
+
+        self.cam.setParams(self.hfov, self.vfov, (0, 0, self.screen_width, self.screen_height))
         self.cam.setTargetPos([1.0, 0.0, 0.0])
-        self.cam.setEyePos([-0.3, 0.0, 0.1])
+        self.cam.setEyePos([self.camera_x, self.camera_y, self.camera_z])
         self.viewer = Viewer(
             screen_width=self.screen_width, 
             screen_height=self.screen_height, 
@@ -78,7 +93,7 @@ class PointCloudViewerNode(Node):
         self.grid = ShapeGrid(self.ctx)
         self.frame = ShapeFrame(self.ctx)
         self.pyramid = ShapePyramid(self.ctx)
-        self.cloud = ShapePointCloud(self.ctx, self.size_points)
+        self.cloud = ShapePointCloud(self.ctx, self.size_points, point_size=self.point_size_point_cloud)
 
         self.trajectory_points = []
         self.trajectory = None
@@ -99,7 +114,7 @@ class PointCloudViewerNode(Node):
 
         self.create_subscription(
             Image,
-            self.get_parameter('camera_image_topic').get_parameter_value().string_value,
+            self.get_parameter('rgb_image_topic').get_parameter_value().string_value,
             self.camera_image_cb,
             10
         )
@@ -148,6 +163,8 @@ class PointCloudViewerNode(Node):
     def update(self, dt):
         try:
             self.viewer.update(dt)
+
+            print(f'Camera Position: {self.cam.getEyePos()}')
 
             self.cloud.update_points(
                 array_xyz=self.array_frames_xyz,

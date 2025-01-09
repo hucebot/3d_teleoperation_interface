@@ -11,14 +11,16 @@ class Camera():
         self.target_y = 0.0
         self.target_z = 0.0
         self.fovx = 60.0
+        self.fovy = 60.0
         self.viewport = (0, 0, 0, 0)
-    def setParams(self, fovx, viewport):
+    def setParams(self, fovx, fovy, viewport):
         self.fovx = fovx
+        self.fovy = fovy
         self.viewport = viewport
     def getFovx(self):
         return self.fovx
     def getFovy(self):
-        return 2.0*np.arctan(np.tan(self.fovx*np.pi/180.0/2.0)/self.getAspect())*180.0/np.pi
+        return self.fovy
     def getAspect(self):
         return self.viewport[2]/self.viewport[3]
     def getViewport(self):
@@ -56,7 +58,7 @@ class Camera():
         self.eye_z = self.target_z + eye_radius*np.cos(eye_angle2)
     def getMatProj(self):
         mat_proj = Matrix44.perspective_projection(
-            fovy=self.getFovy(), 
+            fovy=self.getFovy(),
             aspect=self.getAspect(),
             near=0.01, 
             far=1000.0)

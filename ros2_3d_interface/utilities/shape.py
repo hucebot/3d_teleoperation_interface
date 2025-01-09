@@ -264,8 +264,10 @@ class ShapePyramid():
         self.vao.release()
 
 class ShapePointCloud():
-    def __init__(self, ctx, size_points):
+    def __init__(self, ctx, size_points, point_size=1.0):
         self.ctx = ctx
+
+        self.point_size = point_size
 
         self.prog = ctx.program(
             vertex_shader="""
@@ -279,7 +281,7 @@ class ShapePointCloud():
                 void main() {
                     gl_Position = mat_proj * mat_model * mat_rotation * vec4(pos, 1.0);
                     vertex_color = color;
-                    gl_PointSize = 1.0;
+                    gl_PointSize = """ + str(self.point_size) + """;
                 }
             """,
             fragment_shader="""
