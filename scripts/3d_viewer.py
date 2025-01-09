@@ -12,7 +12,7 @@ from visualization_msgs.msg import MarkerArray
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
-    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeTrajectory
+    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeTrajectory, ShapeQuadTexture
 )
 from ros2_3d_interface.utilities.utils import (
     RotIdentity
@@ -30,12 +30,18 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('camera_z', 0.00450755)
         self.declare_parameter('rgb_image_width', 640)
         self.declare_parameter('rgb_image_height', 480)
+        self.declare_parameter('visualizer_x', 0.65)
+        self.declare_parameter('visualizer_y', 0.54)
+        self.declare_parameter('visualizer_z', -0.30)
+        self.declare_parameter('visualizer_width', 0.3)
+        self.declare_parameter('visualizer_height', 0.20)
         self.declare_parameter('point_cloud_width', 640)
         self.declare_parameter('point_cloud_height', 480)
         self.declare_parameter('point_cloud_size_multiplier', 2)
         self.declare_parameter('point_size', 1)
         self.declare_parameter('render_pyramid', False)
         self.declare_parameter('render_trajectory', True)
+        self.declare_parameter('render_image', True)
         self.declare_parameter('hfov', 90)
         self.declare_parameter('vfov', 90)
         self.declare_parameter('render_hz', 60)
@@ -46,6 +52,8 @@ class PointCloudViewerNode(Node):
 
         self.render_pyramid = self.get_parameter('render_pyramid').get_parameter_value().bool_value
         self.render_trajectory = self.get_parameter('render_trajectory').get_parameter_value().bool_value
+        self.render_image = self.get_parameter('render_image').get_parameter_value().bool_value
+
         self.point_size_point_cloud = self.get_parameter('point_size').get_parameter_value().integer_value
 
         self.screen_width = self.get_parameter('window_width').get_parameter_value().integer_value
@@ -53,6 +61,11 @@ class PointCloudViewerNode(Node):
         
         self.rgb_image_width = self.get_parameter('rgb_image_width').get_parameter_value().integer_value
         self.rgb_image_height = self.get_parameter('rgb_image_height').get_parameter_value().integer_value
+        self.visualizer_x = self.get_parameter('visualizer_x').get_parameter_value().double_value
+        self.visualizer_y = self.get_parameter('visualizer_y').get_parameter_value().double_value
+        self.visualizer_z = self.get_parameter('visualizer_z').get_parameter_value().double_value
+        self.visualizer_width = self.get_parameter('visualizer_width').get_parameter_value().double_value
+        self.visualizer_height = self.get_parameter('visualizer_height').get_parameter_value().double_value
 
         self.depth_frame_width = self.get_parameter('point_cloud_width').get_parameter_value().integer_value
         self.depth_frame_height = self.get_parameter('point_cloud_height').get_parameter_value().integer_value
@@ -94,6 +107,9 @@ class PointCloudViewerNode(Node):
         self.frame = ShapeFrame(self.ctx)
         self.pyramid = ShapePyramid(self.ctx)
         self.cloud = ShapePointCloud(self.ctx, self.size_points, point_size=self.point_size_point_cloud)
+        self.image = ShapeQuadTexture(self.ctx, self.rgb_image_width, self.rgb_image_height)
+
+        self.actual_image = np.zeros((self.rgb_image_height, self.rgb_image_width, 3), dtype=np.uint8)
 
         self.trajectory_points = []
         self.trajectory = None
@@ -122,7 +138,7 @@ class PointCloudViewerNode(Node):
         self.get_logger().info("3D Viewer is Ready")
 
     def camera_image_cb(self, msg):
-        pass
+        self.actual_image = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, 3))
 
     def trajectory_cb(self, msg):
         self.trajectory_points = []
@@ -163,8 +179,8 @@ class PointCloudViewerNode(Node):
     def update(self, dt):
         try:
             self.viewer.update(dt)
-
-            print(f'Camera Position: {self.cam.getEyePos()}')
+            
+            #self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
 
             self.cloud.update_points(
                 array_xyz=self.array_frames_xyz,
@@ -191,6 +207,18 @@ class PointCloudViewerNode(Node):
                 rot=RotIdentity(),
                 scale=1.0
             )
+
+            if self.render_image:
+                self.image.update_texture(
+                    self.actual_image)
+
+                self.image.render(
+                    self.cam, 
+                    pos=[self.visualizer_x, self.visualizer_y, self.visualizer_z],
+                    rot=RotIdentity(), 
+                    size=[self.visualizer_width, self.visualizer_height]
+                )
+
 
             if self.render_pyramid:
                 self.pyramid.render(

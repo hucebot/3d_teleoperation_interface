@@ -384,7 +384,9 @@ class ShapeQuadTexture():
         #Create texture
         self.texture = ctx.texture((tex_width,tex_height), 3, dtype="f4")
     def update_texture(self, array_pixels):
-        self.texture.write(array_pixels.astype(np.float32).tobytes())
+        normalized = array_pixels.astype(np.float32) / 255.0
+        self.texture.write(normalized.tobytes())
+
     def render(self, 
             cam, pos=VectZero(), rot=RotIdentity(), 
             size=[1.0, 1.0]):

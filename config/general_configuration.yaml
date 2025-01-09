@@ -5,18 +5,25 @@
     width: 1240
     height: 720
     render_pyramid: false
-    render_trajectory: true
+    render_trajectory: false
+    render_image: true
     resizable: true
     render_hz: 60
     camera_velocity: 0.01
-    camera_x: 0.06213385
-    camera_y: 0.00921031
-    camera_z: 0.00284838
+    camera_x: 0.05275716
+    camera_y: -0.00551082
+    camera_z: -0.00555602
 
   rgb_image:
-    rgb_image_width: 640
-    rgb_image_height: 480
-    rgb_image_topic: "/camera/color/image_raw"
+    visualizer_x: 0.65
+    visualizer_y: 0.54
+    visualizer_z: -0.30
+    visualizer_width: 0.30
+    visualizer_height: 0.20
+    rgb_image_width: 1280
+    width: 1280
+    height: 720
+    topic: "/camera/color/image_raw"
 
   point_cloud:
     width: 640
@@ -24,8 +31,8 @@
     size_multiplier: 2
     point_size: 3
     hfov: 75
-    vfov: 65
-    point_cloud_topic: "/camera/depth_registered/points" 
+    vfov: 70
+    topic: "/camera/depth_registered/points" 
   
 trajectory:
   trajectory_points_topic: "/trajectory_points"

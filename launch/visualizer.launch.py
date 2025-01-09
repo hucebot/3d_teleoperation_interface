@@ -27,6 +27,7 @@ def generate_nodes(config_file):
     window_height = config_file['3d_viewer']['window']['height']
     render_pyramid = config_file['3d_viewer']['window']['render_pyramid']
     render_trajectory = config_file['3d_viewer']['window']['render_trajectory']
+    render_image = config_file['3d_viewer']['window']['render_image']
     resizable_window = config_file['3d_viewer']['window']['resizable']
     render_hz = config_file['3d_viewer']['window']['render_hz']
     camera_velocity = config_file['3d_viewer']['window']['camera_velocity']
@@ -34,9 +35,14 @@ def generate_nodes(config_file):
     camera_y = config_file['3d_viewer']['window']['camera_y']
     camera_z = config_file['3d_viewer']['window']['camera_z']
 
-    rgb_image_width = config_file['3d_viewer']['rgb_image']['rgb_image_width']
-    rgb_image_height = config_file['3d_viewer']['rgb_image']['rgb_image_height']
-    rgb_image_topic = config_file['3d_viewer']['rgb_image']['rgb_image_topic']
+    rgb_image_width = config_file['3d_viewer']['rgb_image']['width']
+    rgb_image_height = config_file['3d_viewer']['rgb_image']['height']
+    rgb_image_topic = config_file['3d_viewer']['rgb_image']['topic']
+    visualizer_x = config_file['3d_viewer']['rgb_image']['visualizer_x']
+    visualizer_y = config_file['3d_viewer']['rgb_image']['visualizer_y']
+    visualizer_z = config_file['3d_viewer']['rgb_image']['visualizer_z']
+    visualizer_width = config_file['3d_viewer']['rgb_image']['visualizer_width']
+    visualizer_height = config_file['3d_viewer']['rgb_image']['visualizer_height']
 
     point_cloud_width = config_file['3d_viewer']['point_cloud']['width']
     point_cloud_height = config_file['3d_viewer']['point_cloud']['height']
@@ -44,12 +50,7 @@ def generate_nodes(config_file):
     point_size = config_file['3d_viewer']['point_cloud']['point_size']
     hfov = config_file['3d_viewer']['point_cloud']['hfov']
     vfov = config_file['3d_viewer']['point_cloud']['vfov']
-    point_cloud_topic = config_file['3d_viewer']['point_cloud']['point_cloud_topic']
-    
-    
-    
-    
-    
+    point_cloud_topic = config_file['3d_viewer']['point_cloud']['topic']
 
     # Trajectory parameters
     trajectory_points_topic = config_file['trajectory']['trajectory_points_topic']
@@ -70,12 +71,18 @@ def generate_nodes(config_file):
                 'camera_z': camera_z,
                 'rgb_image_width': rgb_image_width,
                 'rgb_image_height': rgb_image_height,
+                'visualizer_x': visualizer_x,
+                'visualizer_y': visualizer_y,
+                'visualizer_z': visualizer_z,
+                'visualizer_width': visualizer_width,
+                'visualizer_height': visualizer_height,
                 'point_cloud_width': point_cloud_width,
                 'point_cloud_height': point_cloud_height,
                 'point_cloud_size_multiplier': point_cloud_size_multiplier,
                 'point_size': point_size,
                 'render_pyramid': render_pyramid,
                 'render_trajectory': render_trajectory,
+                'render_image': render_image,
                 'hfov': hfov,
                 'vfov': vfov,
                 'render_hz': render_hz,
