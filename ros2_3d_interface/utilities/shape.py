@@ -113,7 +113,7 @@ class ShapeGrid():
                 #version 330 core
                 out vec4 fragment_color;
                 void main() {
-                    fragment_color = vec4(1.0, 1.0, 1.0, 1.0);
+                    fragment_color = vec4(1.0, 1.0, 1.0, 0.5);
                 }
             """,
         )
@@ -121,11 +121,11 @@ class ShapeGrid():
         #Generate vertices
         list_vertex = []
         for x in np.linspace(-length, length, 2*segments+1):
-            list_vertex += [x, length, 0.0]
-            list_vertex += [x, -length, 0.0]
+            list_vertex += [x, length, -1.0]
+            list_vertex += [x, -length, -1.0]
         for y in np.linspace(-length, length, 2*segments+1):
-            list_vertex += [length, y, 0.0]
-            list_vertex += [-length, y, 0.0]
+            list_vertex += [length, y, -1.0]
+            list_vertex += [-length, y, -1.0]
         #Create buffers
         self.vbo = ctx.buffer(np.array(list_vertex).astype(np.float32).tobytes())
         self.vao = ctx.vertex_array(self.prog, [(self.vbo, "3f4", "pos")])
@@ -264,8 +264,10 @@ class ShapePyramid():
         self.vao.release()
 
 class ShapePointCloud():
-    def __init__(self, ctx, size_points):
+    def __init__(self, ctx, size_points, point_size=1.0):
         self.ctx = ctx
+
+        self.point_size = point_size
 
         self.prog = ctx.program(
             vertex_shader="""
@@ -279,7 +281,7 @@ class ShapePointCloud():
                 void main() {
                     gl_Position = mat_proj * mat_model * mat_rotation * vec4(pos, 1.0);
                     vertex_color = color;
-                    gl_PointSize = 1.0;
+                    gl_PointSize = """ + str(self.point_size) + """;
                 }
             """,
             fragment_shader="""
@@ -382,7 +384,9 @@ class ShapeQuadTexture():
         #Create texture
         self.texture = ctx.texture((tex_width,tex_height), 3, dtype="f4")
     def update_texture(self, array_pixels):
-        self.texture.write(array_pixels.astype(np.float32).tobytes())
+        normalized = array_pixels.astype(np.float32) / 255.0
+        self.texture.write(normalized.tobytes())
+
     def render(self, 
             cam, pos=VectZero(), rot=RotIdentity(), 
             size=[1.0, 1.0]):

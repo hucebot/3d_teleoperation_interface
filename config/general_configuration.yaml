@@ -1,19 +1,42 @@
 3d_viewer:
-  window_name: "3D Viewer"
-  window_width: 1240
-  window_height: 720
-  rgb_image_width: 640
-  rgb_image_height: 480
-  point_cloud_width: 640
-  point_cloud_height: 576
-  point_cloud_size_multiplier: 2
-  render_pyramid: false
-  render_trajectory: true
-  fov: 125
-  render_hz: 60
-  camera_velocity: 0.1
-  point_cloud_topic: "/camera/depth_registered/points"
-  camera_image_topic: "/camera/color/image_raw"
+
+  window:
+    name: "3D Viewer"
+    width: 1240
+    height: 720
+    render_pyramid: false
+    render_trajectory: true
+    render_image: true
+    resizable: true
+    render_hz: 60
+    camera_velocity: 0.01
+    camera_x: 0.00737444
+    camera_y: 0.01639194
+    camera_z: -0.00236817
+
+  streamdeck:
+    use_streamdeck: true
+    reset_view_topic: "/streamdeck/reset_view"
+
+  rgb_image:
+    visualizer_x: 0.2
+    visualizer_y: 0.22
+    visualizer_z: -0.11
+    visualizer_width: 0.15
+    visualizer_height: 0.10
+    rgb_image_width: 1280
+    width: 1280
+    height: 720
+    topic: "/camera/color/image_raw"
+
+  point_cloud:
+    width: 640
+    height: 576
+    size_multiplier: 2
+    point_size: 3
+    hfov: 100
+    vfov: 100
+    topic: "/camera/depth_registered/points" 
   
 trajectory:
   trajectory_points_topic: "/trajectory_points"
