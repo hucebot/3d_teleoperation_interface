@@ -142,7 +142,7 @@ class PointCloudViewerNode(Node):
             PointCloud2,
             self.get_parameter('point_cloud_topic').get_parameter_value().string_value,
             self.pointcloud_cb,
-            10
+            qos_profile_sensor_data
         )
 
         self.create_subscription(
