@@ -6,7 +6,7 @@
     height: 720
     render_pyramid: false
     render_trajectory: true
-    render_image: false
+    render_image: true
     render_robot: true
     resizable: true
     render_hz: 60

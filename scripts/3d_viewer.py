@@ -9,6 +9,8 @@ from sensor_msgs.msg import PointCloud2, Image
 from visualization_msgs.msg import MarkerArray
 from std_msgs.msg import Bool
 
+from rclpy.qos import qos_profile_sensor_data
+
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
@@ -24,6 +26,10 @@ from ros2_3d_interface.utilities.utils import (
 )
 
 class PointCloudViewerNode(Node):
+    """
+    ROS 2 Node for visualizing point clouds, trajectory markers, and RGB images in a 3D viewer.
+    """
+
     def __init__(self):
         super().__init__('pointcloud_viewer_node')
 
@@ -150,7 +156,7 @@ class PointCloudViewerNode(Node):
             Image,
             self.get_parameter('rgb_image_topic').get_parameter_value().string_value,
             self.camera_image_cb,
-            10
+            qos_profile_sensor_data
         )
 
         self.create_subscription(
@@ -163,19 +169,56 @@ class PointCloudViewerNode(Node):
         self.get_logger().info("3D Viewer is Ready")
 
     def reset_camera(self):
+        """
+        Resets the camera position and target to their initial values.
+        """
+
         self.cam.setEyePos(self.initial_eye)
         self.cam.setTargetPos(self.initial_target)
 
     def camera_image_cb(self, msg):
+        """
+        Callback for receiving RGB image data.
+
+
+        Args:
+            msg (sensor_msgs.msg.Image): The incoming RGB image message.
+
+        This function converts the image data from the ROS message into a numpy array for rendering
+        in the 3D viewer.
+        """
+
         self.actual_image = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, 3))
 
     def trajectory_cb(self, msg):
+        """
+        Callback for receiving trajectory points as MarkerArray.
+
+        Args:
+            msg (visualization_msgs.msg.MarkerArray): The incoming trajectory points.
+
+        This function extracts the trajectory points from the message and updates the `ShapeTrajectory`
+        object for rendering in the viewer.
+        """
+
+
         self.trajectory_points = []
         for marker in msg.markers:
             self.trajectory_points.append([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z]) 
         self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 0.5])
 
     def pointcloud_cb(self, msg):
+        """
+        Callback for receiving point cloud data.
+
+        Args:
+            msg (sensor_msgs.msg.PointCloud2): The incoming point cloud message.
+
+        This function extracts XYZ coordinates and RGB values from the point cloud message and updates
+        the arrays used for rendering the point cloud in the 3D viewer.
+        """
+
+        
         try:
             num_points = msg.width * msg.height
 
@@ -206,6 +249,15 @@ class PointCloudViewerNode(Node):
             self.get_logger().error("Error processing pointcloud: %s" % str(e))
 
     def update(self, dt):
+        """
+        Updates the 3D viewer, rendering the current scene.
+
+        Args:
+            dt (float): The time elapsed since the last update.
+
+        This function handles the rendering of the 3D scene's components.
+        """
+
         try:
             self.viewer.update(dt)
             
