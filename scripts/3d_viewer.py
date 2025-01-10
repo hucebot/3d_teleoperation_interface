@@ -12,7 +12,12 @@ from std_msgs.msg import Bool
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
-    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeTrajectory, ShapeQuadTexture
+    ShapeGrid, 
+    ShapeFrame, 
+    ShapePyramid, 
+    ShapePointCloud, 
+    ShapeTrajectory, 
+    ShapeQuadTexture
 )
 from ros2_3d_interface.utilities.utils import (
     RotIdentity
@@ -42,6 +47,9 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('render_pyramid', False)
         self.declare_parameter('render_trajectory', True)
         self.declare_parameter('render_image', True)
+        self.declare_parameter('render_robot', True)
+        self.declare_parameter('robot_model', 'H1')
+        self.declare_parameter('robot_version', 'with_hand')
         self.declare_parameter('hfov', 90)
         self.declare_parameter('vfov', 90)
         self.declare_parameter('render_hz', 60)
@@ -54,6 +62,7 @@ class PointCloudViewerNode(Node):
         self.render_pyramid = self.get_parameter('render_pyramid').get_parameter_value().bool_value
         self.render_trajectory = self.get_parameter('render_trajectory').get_parameter_value().bool_value
         self.render_image = self.get_parameter('render_image').get_parameter_value().bool_value
+        self.render_robot = self.get_parameter('render_robot').get_parameter_value().bool_value
 
         self.point_size_point_cloud = self.get_parameter('point_size').get_parameter_value().integer_value
 
@@ -70,6 +79,8 @@ class PointCloudViewerNode(Node):
 
         self.depth_frame_width = self.get_parameter('point_cloud_width').get_parameter_value().integer_value
         self.depth_frame_height = self.get_parameter('point_cloud_height').get_parameter_value().integer_value
+
+        self.robot_model = self.get_parameter('robot_model').get_parameter_value().string_value
         
         self.hfov = self.get_parameter('hfov').get_parameter_value().integer_value
         self.vfov = self.get_parameter('vfov').get_parameter_value().integer_value
@@ -198,7 +209,7 @@ class PointCloudViewerNode(Node):
         try:
             self.viewer.update(dt)
             
-            self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
+            #self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
 
             self.cloud.update_points(
                 array_xyz=self.array_frames_xyz,
@@ -238,7 +249,6 @@ class PointCloudViewerNode(Node):
                     rot=RotIdentity(), 
                     size=[self.visualizer_width, self.visualizer_height]
                 )
-
 
             if self.render_pyramid:
                 self.pyramid.render(

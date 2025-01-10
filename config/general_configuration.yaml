@@ -6,13 +6,18 @@
     height: 720
     render_pyramid: false
     render_trajectory: true
-    render_image: true
+    render_image: false
+    render_robot: true
     resizable: true
     render_hz: 60
     camera_velocity: 0.01
-    camera_x: 0.00737444
-    camera_y: 0.01639194
+    camera_x: 0.05292658
+    camera_y: 0.03437775
     camera_z: -0.00236817
+
+  robot:
+    model: 'H1'
+    version: 'with_hand'
 
   streamdeck:
     use_streamdeck: true
@@ -33,7 +38,7 @@
     width: 640
     height: 576
     size_multiplier: 2
-    point_size: 3
+    point_size: 1
     hfov: 100
     vfov: 100
     topic: "/camera/depth_registered/points" 
@@ -41,5 +46,3 @@
 trajectory:
   trajectory_points_topic: "/trajectory_points"
   dummy_trajectory: true
-
-  

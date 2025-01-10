@@ -117,7 +117,7 @@ sh run_dev_docker.sh
 To publish the point cloud data, it will depent on the camera you are using. For the Orbbec camera (Femto Bolt), use the following command:
 
 ```bash
-ros2 launch orbbec_camera femto_bolt.launch.py enable_point_cloud:=true enable_colored_point_cloud:=true depth_width:=640 depth_height:=576 ir_width:=640 ir_height:=576 depth_fps:=30 ir_fps:=30
+ros2 launch orbbec_camera femto_bolt.launch.py enable_point_cloud:=true enable_colored_point_cloud:=true depth_width:=1024 depth_height:=1024 ir_width:=1024 ir_height:=1024 depth_fps:=15 ir_fps:=15
 ```
 
 ## 3D Visualizer
@@ -131,21 +131,49 @@ ros2 launch  ros2_3d_interface visualizer.launch.py
 The configuration located in the `config` folder is used to setup everything for the visualizer. The file `general_configuration.yaml` has the following structure:
 
 ```yaml
-3d_viewer:
-  window_name: Name that will be displayed in the window
-  window_width: Window width for the visualizer
-  window_height: Window height for the visualizer
-  point_cloud_width: Point cloud width
-  point_cloud_height: Point cloud height
-  point_cloud_size_multiplier: Multiplier for the point cloud size
-  render_pyramid: Boolean to render the pyramid view
-  render_trajectory: Boolean to render the trajectory
-  fov: Field of view for the camera
-  render_hz: Render frequency
-  camera_velocity: Camera velocity
-  point_cloud_topic: Point cloud topic used to visualize the point cloud data
+3d_viewer: 
+  window:
+    name: "3D Viewer" # Title of the 3D viewer window
+    width: 1240 # Width of the viewer window in pixels
+    height: 720 # Height of the viewer window in pixels
+    render_pyramid: false # Toggle to render camera frustum
+    render_trajectory: true # Toggle to render robot trajectory
+    render_image: false # Toggle to render camera image in 3D space
+    render_robot: true # Toggle to render robot model
+    resizable: true # Allow window resizing
+    render_hz: 60 # Rendering frequency in Hz
+    camera_velocity: 0.01 # Camera movement speed
+    camera_x: 0.05292658 # Initial camera X position
+    camera_y: 0.03437775 # Initial camera Y position
+    camera_z: -0.00236817 # Initial camera Z position 
+
+  robot:
+    model: 'H1' # Robot model identifier
+    version: 'with_hand' # Robot version specification 
+    
+  streamdeck:
+    use_streamdeck: true # Enable StreamDeck integration
+    reset_view_topic: "/streamdeck/reset_view" # Topic for resetting view 
   
-trajectory:
-  trajectory_points_topic: Trajectory points topic
-  dummy_trajectory: Boolean to use a dummy trajectory
+  rgb_image:
+    visualizer_x: 0.2 # X position of RGB image visualizer
+    visualizer_y: 0.22 # Y position of RGB image visualizer
+    visualizer_z: -0.11 # Z position of RGB image visualizer
+    visualizer_width: 0.15 # Width of RGB image visualizer
+    visualizer_height: 0.10 # Height of RGB image visualizer
+    rgb_image_width: 1280 # Width of RGB image in pixels
+    width: 1280 # Width of RGB image display
+    height: 720 # Height of RGB image display
+    topic: "/camera/color/image_raw" # ROS topic for RGB image point_cloud:
+    width: 640 # Width of point cloud in points
+    height: 576 # Height of point cloud in points
+    size_multiplier: 2 # Multiplier for point cloud size
+    point_size: 1 # Size of individual points
+    hfov: 100 # Horizontal field of view in degrees
+    vfov: 100 # Vertical field of view in degrees
+    topic: "/camera/depth_registered/points" # Topic for point cloud data 
+
+  trajectory:
+    trajectory_points_topic: "/trajectory_points" # Topic for trajectory points
+    dummy_trajectory: true # Use dummy trajectory data
 ```

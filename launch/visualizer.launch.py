@@ -27,6 +27,7 @@ def generate_nodes(config_file):
     window_height = config_file['3d_viewer']['window']['height']
     render_pyramid = config_file['3d_viewer']['window']['render_pyramid']
     render_trajectory = config_file['3d_viewer']['window']['render_trajectory']
+    render_robot = config_file['3d_viewer']['window']['render_robot']
     render_image = config_file['3d_viewer']['window']['render_image']
     resizable_window = config_file['3d_viewer']['window']['resizable']
     render_hz = config_file['3d_viewer']['window']['render_hz']
@@ -34,6 +35,9 @@ def generate_nodes(config_file):
     camera_x = config_file['3d_viewer']['window']['camera_x']
     camera_y = config_file['3d_viewer']['window']['camera_y']
     camera_z = config_file['3d_viewer']['window']['camera_z']
+
+    robot_model = config_file['3d_viewer']['robot']['model']
+    robot_version = config_file['3d_viewer']['robot']['version']
 
     rgb_image_width = config_file['3d_viewer']['rgb_image']['width']
     rgb_image_height = config_file['3d_viewer']['rgb_image']['height']
@@ -88,6 +92,8 @@ def generate_nodes(config_file):
                 'point_size': point_size,
                 'render_pyramid': render_pyramid,
                 'render_trajectory': render_trajectory,
+                'render_robot': render_robot,
+                'robot_model': robot_model,
                 'render_image': render_image,
                 'reset_view_topic': reset_view_topic,
                 'hfov': hfov,
