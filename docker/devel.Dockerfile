@@ -119,6 +119,9 @@ WORKDIR /ros2_ws/robot_data/robot_dart
 RUN git sparse-checkout set utheque
 RUN rm -rf /ros2_ws/robot_data/robot_dart/src
 
+WORKDIR /ros2_ws/src
+RUN git clone --branch=humble-devel https://github.com/pal-robotics/tiago_dual_robot.git
+
 ###### Update kernel buffer
 RUN sysctl net.ipv4.ipfrag_time=3
 RUN sysctl net.ipv4.ipfrag_high_thresh=134217728

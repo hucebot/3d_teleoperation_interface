@@ -12,9 +12,9 @@
     resizable: true
     width: 1240
     height: 720
-    camera_x: 0.05292658
-    camera_y: 0.03437775
-    camera_z: -0.00236817
+    camera_x: -0.04284239
+    camera_y: 0.0205328
+    camera_z: 0.00186915
     camera_yaw: 1.0
     camera_pitch: 0.0
     camera_roll: 0.0
