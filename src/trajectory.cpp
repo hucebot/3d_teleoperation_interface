@@ -42,11 +42,11 @@ public:
             "/trajectory_points", 10);
 
         // Generar 20 trayectorias
-        generate_trajectories(10);
+        generate_trajectories(50);
 
         // Llama a la función run en un hilo separado
         timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(100),
+            std::chrono::milliseconds(2000),
             std::bind(&TrajectoryNode::publish_trajectories, this));
     }
 
