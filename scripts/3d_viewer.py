@@ -39,6 +39,9 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('camera_x', 0.03886509)
         self.declare_parameter('camera_y', 0.00772565)
         self.declare_parameter('camera_z', 0.00450755)
+        self.declare_parameter('camera_yaw', 0.0)
+        self.declare_parameter('camera_pitch', 0.0)
+        self.declare_parameter('camera_roll', 0.0)
         self.declare_parameter('rgb_image_width', 640)
         self.declare_parameter('rgb_image_height', 480)
         self.declare_parameter('visualizer_x', 0.65)
@@ -105,9 +108,12 @@ class PointCloudViewerNode(Node):
         self.camera_x = self.get_parameter('camera_x').get_parameter_value().double_value
         self.camera_y = self.get_parameter('camera_y').get_parameter_value().double_value
         self.camera_z = self.get_parameter('camera_z').get_parameter_value().double_value
+        self.camera_yaw = self.get_parameter('camera_yaw').get_parameter_value().double_value
+        self.camera_pitch = self.get_parameter('camera_pitch').get_parameter_value().double_value
+        self.camera_roll = self.get_parameter('camera_roll').get_parameter_value().double_value
 
         self.cam.setParams(self.hfov, self.vfov, (0, 0, self.screen_width, self.screen_height))
-        self.cam.setTargetPos([1.0, 0.0, 0.0])
+        self.cam.setTargetPos([self.camera_yaw, self.camera_pitch, self.camera_roll])
         self.cam.setEyePos([self.camera_x, self.camera_y, self.camera_z])
         self.viewer = Viewer(
             screen_width=self.screen_width, 

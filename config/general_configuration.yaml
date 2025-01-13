@@ -1,19 +1,47 @@
 3d_viewer:
-
-  window:
-    name: "3D Viewer"
-    width: 1240
-    height: 720
+  general:
     render_pyramid: false
     render_trajectory: true
     render_image: true
     render_robot: true
-    resizable: true
     render_hz: 60
     camera_velocity: 0.01
+
+  main_window:
+    name: "Main View"
+    resizable: true
+    width: 1240
+    height: 720
     camera_x: 0.05292658
     camera_y: 0.03437775
     camera_z: -0.00236817
+    camera_yaw: 1.0
+    camera_pitch: 0.0
+    camera_roll: 0.0
+  
+  upside_down_window:
+    name: "Upside View"
+    resizable: true
+    width: 1240
+    height: 720
+    camera_x: 0.05292658
+    camera_y: 0.03437775
+    camera_z: -0.00236817
+    camera_yaw: 0.0
+    camera_pitch: 0.0
+    camera_roll: 0.0
+
+  side_window:
+    name: "Side View"
+    resizable: true
+    width: 1240
+    height: 720
+    camera_x: 0.05292658
+    camera_y: 0.03437775
+    camera_z: -0.00236817
+    camera_yaw: 0.0
+    camera_pitch: 0.0
+    camera_roll: 0.0
 
   robot:
     model: 'H1'

@@ -21,20 +21,13 @@ def generate_launch_description():
     )
 
 def generate_nodes(config_file):
-    # 3D Viewer parameters
-    window_name = config_file['3d_viewer']['window']['name']
-    window_width = config_file['3d_viewer']['window']['width']
-    window_height = config_file['3d_viewer']['window']['height']
-    render_pyramid = config_file['3d_viewer']['window']['render_pyramid']
-    render_trajectory = config_file['3d_viewer']['window']['render_trajectory']
-    render_robot = config_file['3d_viewer']['window']['render_robot']
-    render_image = config_file['3d_viewer']['window']['render_image']
-    resizable_window = config_file['3d_viewer']['window']['resizable']
-    render_hz = config_file['3d_viewer']['window']['render_hz']
-    camera_velocity = config_file['3d_viewer']['window']['camera_velocity']
-    camera_x = config_file['3d_viewer']['window']['camera_x']
-    camera_y = config_file['3d_viewer']['window']['camera_y']
-    camera_z = config_file['3d_viewer']['window']['camera_z']
+    # General parameters
+    render_pyramid = config_file['3d_viewer']['general']['render_pyramid']
+    render_trajectory = config_file['3d_viewer']['general']['render_trajectory']
+    render_robot = config_file['3d_viewer']['general']['render_robot']
+    render_image = config_file['3d_viewer']['general']['render_image']
+    render_hz = config_file['3d_viewer']['general']['render_hz']
+    camera_velocity = config_file['3d_viewer']['general']['camera_velocity']
 
     robot_model = config_file['3d_viewer']['robot']['model']
     robot_version = config_file['3d_viewer']['robot']['version']
@@ -66,48 +59,53 @@ def generate_nodes(config_file):
 
     node_list = []
 
-    visualizer_node = Node(
-        package='ros2_3d_interface',
-        executable='3d_viewer.py',
-        name='viewer',
-        output='screen',
-        parameters=[
-            {
-                'window_name': window_name,
-                'window_width': window_width,
-                'window_height': window_height,
-                'camera_x': camera_x,
-                'camera_y': camera_y,
-                'camera_z': camera_z,
-                'rgb_image_width': rgb_image_width,
-                'rgb_image_height': rgb_image_height,
-                'visualizer_x': visualizer_x,
-                'visualizer_y': visualizer_y,
-                'visualizer_z': visualizer_z,
-                'visualizer_width': visualizer_width,
-                'visualizer_height': visualizer_height,
-                'point_cloud_width': point_cloud_width,
-                'point_cloud_height': point_cloud_height,
-                'point_cloud_size_multiplier': point_cloud_size_multiplier,
-                'point_size': point_size,
-                'render_pyramid': render_pyramid,
-                'render_trajectory': render_trajectory,
-                'render_robot': render_robot,
-                'robot_model': robot_model,
-                'render_image': render_image,
-                'reset_view_topic': reset_view_topic,
-                'hfov': hfov,
-                'vfov': vfov,
-                'render_hz': render_hz,
-                'camera_velocity': camera_velocity,
-                'point_cloud_topic': point_cloud_topic,
-                'trajectory_points_topic': trajectory_points_topic,
-                'rgb_image_topic': rgb_image_topic
-            }
-        ]
-    )
+    # This could be main, upside_down or side
+    for views in ['main']:
+        node = Node(
+            package='ros2_3d_interface',
+            executable='3d_viewer.py',
+            name=f'{views}_camera_window',
+            output='screen',
+            parameters=[
+                {
+                    'window_name': config_file['3d_viewer'][f'{views}_window']['name'],
+                    'window_width': config_file['3d_viewer'][f'{views}_window']['width'],
+                    'window_height': config_file['3d_viewer'][f'{views}_window']['height'],
+                    'camera_x': config_file['3d_viewer'][f'{views}_window']['camera_x'],
+                    'camera_y': config_file['3d_viewer'][f'{views}_window']['camera_y'],
+                    'camera_z': config_file['3d_viewer'][f'{views}_window']['camera_z'],
+                    'camera_yaw': config_file['3d_viewer'][f'{views}_window']['camera_yaw'],
+                    'camera_pitch': config_file['3d_viewer'][f'{views}_window']['camera_pitch'],
+                    'camera_roll': config_file['3d_viewer'][f'{views}_window']['camera_roll'],
+                    'rgb_image_width': rgb_image_width,
+                    'rgb_image_height': rgb_image_height,
+                    'visualizer_x': visualizer_x,
+                    'visualizer_y': visualizer_y,
+                    'visualizer_z': visualizer_z,
+                    'visualizer_width': visualizer_width,
+                    'visualizer_height': visualizer_height,
+                    'point_cloud_width': point_cloud_width,
+                    'point_cloud_height': point_cloud_height,
+                    'point_cloud_size_multiplier': point_cloud_size_multiplier,
+                    'point_size': point_size,
+                    'render_pyramid': render_pyramid,
+                    'render_trajectory': render_trajectory,
+                    'render_robot': render_robot,
+                    'robot_model': robot_model,
+                    'render_image': render_image,
+                    'reset_view_topic': reset_view_topic,
+                    'hfov': hfov,
+                    'vfov': vfov,
+                    'render_hz': render_hz,
+                    'camera_velocity': camera_velocity,
+                    'point_cloud_topic': point_cloud_topic,
+                    'trajectory_points_topic': trajectory_points_topic,
+                    'rgb_image_topic': rgb_image_topic
+                }
+            ]
+        )
 
-    node_list.append(visualizer_node)
+        node_list.append(node)
 
     if use_streamdeck:
         streamdeck_node = Node(
