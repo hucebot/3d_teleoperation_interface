@@ -9,7 +9,7 @@ import time
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 from StreamDeck.DeviceManager import DeviceManager
 from StreamDeck.ImageHelpers import PILHelper
-from std_msgs.msg import Bool
+from std_msgs.msg import String
 
 
 class StreamDeckController(Node):
@@ -17,7 +17,7 @@ class StreamDeckController(Node):
         super().__init__('stream_deck_controller')
         self.exit_loop = False
 
-        self.reset_view_publisher = self.create_publisher(Bool, '/streamdeck/reset_view', 10)
+        self.reset_view_publisher = self.create_publisher(String, '/streamdeck/reset_view', 10)
         self.rate = 0.1
 
         self.key_width = 100
@@ -56,13 +56,25 @@ class StreamDeckController(Node):
 
     def on_key_change(self, deck, key, state):
         if state:
-            if key == self.reset_view_position_button:
-                self.reset_view_publisher.publish(Bool(data=True))
-                self.create_button(self.reset_view_position_button, "Update Point Cloud", self.background_color_active)
+            if key == self.frontal_view_button:
+                self.reset_view_publisher.publish(String(data="frontal"))
+                self.create_button(self.frontal_view_button, "Frontal View", self.background_color_active)
+
+            elif key == self.upper_view_button:
+                self.reset_view_publisher.publish(String(data="upper"))
+                self.create_button(self.upper_view_button, "Upper View", self.background_color_active)
+
+            elif key == self.side_view_button:
+                self.reset_view_publisher.publish(String(data="side"))
+                self.create_button(self.side_view_button, "Side View", self.background_color_active)
+
 
         else:
-            self.create_button(self.reset_view_position_button, "Update Point Cloud", self.background_color)
-            self.reset_view_publisher.publish(Bool(data=False))
+            self.create_button(self.frontal_view_button, "Frontal View", self.background_color)
+            self.create_button(self.upper_view_button, "Upper View", self.background_color)
+            self.create_button(self.side_view_button, "Side View", self.background_color)
+            
+            self.reset_view_publisher.publish(String(data="-"))
 
     def create_button(self, position, label, background_color):
         image = self.background_image.copy()
@@ -105,10 +117,19 @@ class StreamDeckController(Node):
 
 
     def initialize_buttons(self):
-        #### Reset View Button
-        self.reset_view_position_button = (0, 0)
-        self.reset_view_position_button = self.reset_view_position_button[0] * self.row + self.reset_view_position_button[1]
-        self.reset_view_button = self.create_button(self.reset_view_position_button, "Reset View Button", self.background_color)
+        #### Frontal View Button
+        self.frontal_view_button = (0, 0)
+        self.frontal_view_button = self.frontal_view_button[0] * self.row + self.frontal_view_button[1]
+        self.create_button(self.frontal_view_button, "Frontal View", self.background_color)
+
+        self.upper_view_button = (0, 1)
+        self.upper_view_button = self.upper_view_button[0] * self.row + self.upper_view_button[1]
+        self.create_button(self.upper_view_button, "Upper View", self.background_color)
+
+        self.side_view_button = (0, 2)
+        self.side_view_button = self.side_view_button[0] * self.row + self.side_view_button[1]
+        self.create_button(self.side_view_button, "Side View", self.background_color)
+
 
 
 if __name__ == '__main__':
