@@ -2,6 +2,8 @@ import sys
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget
 from PySide6.QtCore import Qt
 
+from common.darkstyle import dark_style
+
 class VideoWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -34,6 +36,7 @@ class VideoWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    dark_style(app)
     window = VideoWindow()
     window.show()
     sys.exit(app.exec())
