@@ -118,7 +118,3 @@ The configuration located in the `config` folder is used to setup everything for
     trajectory_points_topic: "/trajectory_points" # Topic for trajectory points
     dummy_trajectory: true # Use dummy trajectory data
 ```
-
-export ROS_DOMAIN_ID=42
-export ROS_LOCALHOST_ONLY=1
-export CYCLONEDDS_URI=file:///ros2_ws/src/ros2_3d_interface/config/DDS_configuration.xml

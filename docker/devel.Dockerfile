@@ -130,7 +130,7 @@ RUN pip install usd-core \
     trimesh
 RUN pip install --upgrade networkx
 
-RUN echo "export FASTDDS_BUILTIN_TRANSPORTS=LARGE_DATA" >> ~/.bashrc
+RUN echo "export FASTDDS_BUILTIN_TRANSPORTS=LARGE_DATA?max_msg_size=1MB&soets_size=1MB&non_blocking=true&tcp_negotiation_timeout=50" >> ~/.bashrc
 
 ###### Source ROS2
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc
