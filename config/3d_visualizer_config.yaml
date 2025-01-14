@@ -1,0 +1,59 @@
+
+main_window:
+  name: "Main View"
+  resizable: true
+  width: 1240
+  height: 720
+
+  frontal_camera_x: -0.04284239
+  frontal_camera_y: 0.0205328
+  frontal_camera_z: 0.00186915
+  frontal_camera_yaw: 1.0
+  frontal_camera_pitch: 0.0
+  frontal_camera_roll: 0.0
+
+  upper_camera_x: 0.05292658
+  upper_camera_y: 0.03437775
+  upper_camera_z: -0.00236817
+  upper_camera_yaw: 0.0
+  upper_camera_pitch: 0.0
+  upper_camera_roll: 0.0
+
+  side_camera_x: 0.94084642
+  side_camera_y: 1.43811292
+  side_camera_z: 0.10351022
+  side_camera_yaw: 0.0
+  side_camera_pitch: 0.0
+  side_camera_roll: 0.0
+
+robot:
+  model: 'H1'
+  version: 'with_hand'
+
+streamdeck:
+  use_streamdeck: true
+  reset_view_topic: "/streamdeck/reset_view"
+
+rgb_image:
+  visualizer_x: 0.2
+  visualizer_y: 0.22
+  visualizer_z: -0.11
+  visualizer_width: 0.15
+  visualizer_height: 0.10
+  rgb_image_width: 1280
+  width: 1280
+  height: 720
+  topic: "/camera/color/image_raw"
+
+point_cloud:
+  width: 640
+  height: 576
+  size_multiplier: 2
+  point_size: 1
+  hfov: 100
+  vfov: 100
+  topic: "/camera/depth_registered/points" 
+
+trajectory:
+  trajectory_points_topic: "/trajectory_points"
+  dummy_trajectory: true
