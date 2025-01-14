@@ -13,8 +13,6 @@ if [ $isRunning -eq 0 ]; then
         -v /tmp/.X11-unix:/tmp/.X11-unix \
         --env QT_X11_NO_MITSHM=1 \
         --net host \
-        --ipc host \
-        --pid host \
         --privileged \
         -it \
         -v /dev:/dev \

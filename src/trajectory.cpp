@@ -42,7 +42,7 @@ public:
             "/trajectory_points", 10);
 
         // Generar 20 trayectorias
-        generate_trajectories(50);
+        generate_trajectories(1);
 
         // Llama a la función run en un hilo separado
         timer_ = this->create_wall_timer(

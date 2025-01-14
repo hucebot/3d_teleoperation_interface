@@ -129,11 +129,8 @@ RUN sysctl net.ipv4.ipfrag_high_thresh=134217728
 RUN pip install usd-core \
     trimesh
 RUN pip install --upgrade networkx
-#RUN sysctl -w net.core.rmem_max=2147483647
-#RUN sysctl -w net.core.rmem_max=2147483647
-#RUN sysctl -w net.core.rmem_default=2147483647
-#RUN sysctl -w net.core.wmem_max=2147483647
-#RUN sysctl -w net.core.wmem_default=2147483647
+
+RUN echo "export FASTDDS_BUILTIN_TRANSPORTS=LARGE_DATA" >> ~/.bashrc
 
 ###### Source ROS2
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc

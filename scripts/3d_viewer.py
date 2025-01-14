@@ -263,7 +263,6 @@ class PointCloudViewerNode(Node):
         This function extracts XYZ coordinates and RGB values from the point cloud message and updates
         the arrays used for rendering the point cloud in the 3D viewer.
         """
-
         
         try:
             num_points = msg.width * msg.height
@@ -307,8 +306,8 @@ class PointCloudViewerNode(Node):
         try:
             self.viewer.update(dt)
             
-            self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
-            self.get_logger().info(f'Camera orientation: {self.cam.getEyePolar()}')
+            #self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
+            #self.get_logger().info(f'Camera orientation: {self.cam.getEyePolar()}')
 
             self.cloud.update_points(
                 array_xyz=self.array_frames_xyz,

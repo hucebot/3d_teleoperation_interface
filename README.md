@@ -60,6 +60,14 @@ There is launch file that will start the visualizer tool to visualize the point 
 ros2 launch  ros2_3d_interface visualizer.launch.py
 ```
 
+```bash
+sudo sysctl -w net.core.rmem_max=2147483647
+sudo sysctl -w net.core.rmem_max=2147483647
+sudo sysctl -w net.core.rmem_default=2147483647
+sudo sysctl -w net.core.wmem_max=2147483647
+sudo sysctl -w net.core.wmem_default=2147483647
+```
+
 ### Configuration File
 The configuration located in the `config` folder is used to setup everything for the visualizer. The file `general_configuration.yaml` has the following structure:
 
@@ -110,3 +118,7 @@ The configuration located in the `config` folder is used to setup everything for
     trajectory_points_topic: "/trajectory_points" # Topic for trajectory points
     dummy_trajectory: true # Use dummy trajectory data
 ```
+
+export ROS_DOMAIN_ID=42
+export ROS_LOCALHOST_ONLY=1
+export CYCLONEDDS_URI=file:///ros2_ws/src/ros2_3d_interface/config/DDS_configuration.xml

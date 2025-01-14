@@ -2,7 +2,7 @@
   general:
     render_pyramid: false
     render_trajectory: true
-    render_image: false
+    render_image: true
     render_robot: true
     render_hz: 60
     camera_velocity: 0.1
