@@ -111,5 +111,26 @@ RUN apt-get install -yy python3-setuptools \
 ###### Install TORCH
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
+###### Install ROBOT Meshes
+# Tiago Dual Manipulator
+WORKDIR /ros2_ws/robot_data
+RUN git clone --filter=blob:none --sparse https://github.com/NOSALRO/robot_dart.git
+WORKDIR /ros2_ws/robot_data/robot_dart
+RUN git sparse-checkout set utheque
+RUN rm -rf /ros2_ws/robot_data/robot_dart/src
+
+WORKDIR /ros2_ws/src
+RUN git clone --branch=humble-devel https://github.com/pal-robotics/tiago_dual_robot.git
+
+###### Update kernel buffer
+RUN sysctl net.ipv4.ipfrag_time=3
+RUN sysctl net.ipv4.ipfrag_high_thresh=134217728
+
+RUN pip install usd-core \
+    trimesh
+RUN pip install --upgrade networkx
+
+RUN echo "export FASTDDS_BUILTIN_TRANSPORTS=LARGE_DATA?max_msg_size=1MB&soets_size=1MB&non_blocking=true&tcp_negotiation_timeout=50" >> ~/.bashrc
+
 ###### Source ROS2
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> ~/.bashrc

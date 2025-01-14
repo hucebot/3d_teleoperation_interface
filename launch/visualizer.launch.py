@@ -21,19 +21,16 @@ def generate_launch_description():
     )
 
 def generate_nodes(config_file):
-    # 3D Viewer parameters
-    window_name = config_file['3d_viewer']['window']['name']
-    window_width = config_file['3d_viewer']['window']['width']
-    window_height = config_file['3d_viewer']['window']['height']
-    render_pyramid = config_file['3d_viewer']['window']['render_pyramid']
-    render_trajectory = config_file['3d_viewer']['window']['render_trajectory']
-    render_image = config_file['3d_viewer']['window']['render_image']
-    resizable_window = config_file['3d_viewer']['window']['resizable']
-    render_hz = config_file['3d_viewer']['window']['render_hz']
-    camera_velocity = config_file['3d_viewer']['window']['camera_velocity']
-    camera_x = config_file['3d_viewer']['window']['camera_x']
-    camera_y = config_file['3d_viewer']['window']['camera_y']
-    camera_z = config_file['3d_viewer']['window']['camera_z']
+    # General parameters
+    render_pyramid = config_file['3d_viewer']['general']['render_pyramid']
+    render_trajectory = config_file['3d_viewer']['general']['render_trajectory']
+    render_robot = config_file['3d_viewer']['general']['render_robot']
+    render_image = config_file['3d_viewer']['general']['render_image']
+    render_hz = config_file['3d_viewer']['general']['render_hz']
+    camera_velocity = config_file['3d_viewer']['general']['camera_velocity']
+
+    robot_model = config_file['3d_viewer']['robot']['model']
+    robot_version = config_file['3d_viewer']['robot']['version']
 
     rgb_image_width = config_file['3d_viewer']['rgb_image']['width']
     rgb_image_height = config_file['3d_viewer']['rgb_image']['height']
@@ -60,21 +57,62 @@ def generate_nodes(config_file):
     trajectory_points_topic = config_file['trajectory']['trajectory_points_topic']
     dummy_trajectory = config_file['trajectory']['dummy_trajectory']
 
+    name = config_file['3d_viewer']['main_window']['name']
+    window_width = config_file['3d_viewer']['main_window']['width']
+    window_height = config_file['3d_viewer']['main_window']['height']
+
+    frontal_camera_x = config_file['3d_viewer']['main_window']['frontal_camera_x']
+    frontal_camera_y = config_file['3d_viewer']['main_window']['frontal_camera_y']
+    frontal_camera_z = config_file['3d_viewer']['main_window']['frontal_camera_z']
+    frontal_camera_yaw = config_file['3d_viewer']['main_window']['frontal_camera_yaw']
+    frontal_camera_pitch = config_file['3d_viewer']['main_window']['frontal_camera_pitch']
+    frontal_camera_roll = config_file['3d_viewer']['main_window']['frontal_camera_roll']
+
+    upper_camera_x = config_file['3d_viewer']['main_window']['upper_camera_x']
+    upper_camera_y = config_file['3d_viewer']['main_window']['upper_camera_y']
+    upper_camera_z = config_file['3d_viewer']['main_window']['upper_camera_z']
+    upper_camera_yaw = config_file['3d_viewer']['main_window']['upper_camera_yaw']
+    upper_camera_pitch = config_file['3d_viewer']['main_window']['upper_camera_pitch']
+    upper_camera_roll = config_file['3d_viewer']['main_window']['upper_camera_roll']
+
+    side_camera_x = config_file['3d_viewer']['main_window']['side_camera_x']
+    side_camera_y = config_file['3d_viewer']['main_window']['side_camera_y']
+    side_camera_z = config_file['3d_viewer']['main_window']['side_camera_z']
+    side_camera_yaw = config_file['3d_viewer']['main_window']['side_camera_yaw']
+    side_camera_pitch = config_file['3d_viewer']['main_window']['side_camera_pitch']
+    side_camera_roll = config_file['3d_viewer']['main_window']['side_camera_roll']
+
     node_list = []
 
-    visualizer_node = Node(
+    node = Node(
         package='ros2_3d_interface',
         executable='3d_viewer.py',
-        name='viewer',
+        name='main_window',
         output='screen',
         parameters=[
             {
-                'window_name': window_name,
+                'render_pyramid': render_pyramid,
+                'window_name': name,
                 'window_width': window_width,
                 'window_height': window_height,
-                'camera_x': camera_x,
-                'camera_y': camera_y,
-                'camera_z': camera_z,
+                'frontal_camera_x': frontal_camera_x,
+                'frontal_camera_y': frontal_camera_y,
+                'frontal_camera_z': frontal_camera_z,
+                'frontal_camera_yaw': frontal_camera_yaw,
+                'frontal_camera_pitch': frontal_camera_pitch,
+                'frontal_camera_roll': frontal_camera_roll,
+                'upper_camera_x': upper_camera_x,
+                'upper_camera_y': upper_camera_y,
+                'upper_camera_z': upper_camera_z,
+                'upper_camera_yaw': upper_camera_yaw,
+                'upper_camera_pitch': upper_camera_pitch,
+                'upper_camera_roll': upper_camera_roll,
+                'side_camera_x': side_camera_x,
+                'side_camera_y': side_camera_y,
+                'side_camera_z': side_camera_z,
+                'side_camera_yaw': side_camera_yaw,
+                'side_camera_pitch': side_camera_pitch,
+                'side_camera_roll': side_camera_roll,
                 'rgb_image_width': rgb_image_width,
                 'rgb_image_height': rgb_image_height,
                 'visualizer_x': visualizer_x,
@@ -86,8 +124,9 @@ def generate_nodes(config_file):
                 'point_cloud_height': point_cloud_height,
                 'point_cloud_size_multiplier': point_cloud_size_multiplier,
                 'point_size': point_size,
-                'render_pyramid': render_pyramid,
                 'render_trajectory': render_trajectory,
+                'render_robot': render_robot,
+                'robot_model': robot_model,
                 'render_image': render_image,
                 'reset_view_topic': reset_view_topic,
                 'hfov': hfov,
@@ -101,7 +140,7 @@ def generate_nodes(config_file):
         ]
     )
 
-    node_list.append(visualizer_node)
+    node_list.append(node)
 
     if use_streamdeck:
         streamdeck_node = Node(

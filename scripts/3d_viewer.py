@@ -7,27 +7,35 @@ import numpy as np
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, Image
 from visualization_msgs.msg import MarkerArray
-from std_msgs.msg import Bool
+from std_msgs.msg import String
+
+from rclpy.qos import qos_profile_sensor_data
 
 from ros2_3d_interface.utilities.camera import Camera
 from ros2_3d_interface.utilities.viewer import Viewer
 from ros2_3d_interface.utilities.shape import (
-    ShapeGrid, ShapeFrame, ShapePyramid, ShapePointCloud, ShapeTrajectory, ShapeQuadTexture
+    ShapeGrid, 
+    ShapeFrame, 
+    ShapePyramid, 
+    ShapePointCloud, 
+    ShapeTrajectory, 
+    ShapeQuadTexture
 )
 from ros2_3d_interface.utilities.utils import (
     RotIdentity
 )
 
 class PointCloudViewerNode(Node):
+    """
+    ROS 2 Node for visualizing point clouds, trajectory markers, and RGB images in a 3D viewer.
+    """
+
     def __init__(self):
         super().__init__('pointcloud_viewer_node')
 
         self.declare_parameter('window_name', '3D Viewer')
         self.declare_parameter('window_width', 640)
         self.declare_parameter('window_height', 480)
-        self.declare_parameter('camera_x', 0.03886509)
-        self.declare_parameter('camera_y', 0.00772565)
-        self.declare_parameter('camera_z', 0.00450755)
         self.declare_parameter('rgb_image_width', 640)
         self.declare_parameter('rgb_image_height', 480)
         self.declare_parameter('visualizer_x', 0.65)
@@ -42,6 +50,9 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('render_pyramid', False)
         self.declare_parameter('render_trajectory', True)
         self.declare_parameter('render_image', True)
+        self.declare_parameter('render_robot', True)
+        self.declare_parameter('robot_model', 'H1')
+        self.declare_parameter('robot_version', 'with_hand')
         self.declare_parameter('hfov', 90)
         self.declare_parameter('vfov', 90)
         self.declare_parameter('render_hz', 60)
@@ -50,10 +61,29 @@ class PointCloudViewerNode(Node):
         self.declare_parameter('trajectory_points_topic', '/trajectory_points')
         self.declare_parameter('rgb_image_topic', '/camera/color/image_raw')
         self.declare_parameter('reset_view_topic', '/streamdeck/reset_view')
+        self.declare_parameter('frontal_camera_x', 0.03886509)
+        self.declare_parameter('frontal_camera_y', 0.00772565)
+        self.declare_parameter('frontal_camera_z', 0.00450755)
+        self.declare_parameter('frontal_camera_yaw', 0.0)
+        self.declare_parameter('frontal_camera_pitch', 0.0)
+        self.declare_parameter('frontal_camera_roll', 0.0)
+        self.declare_parameter('upper_camera_x', 0.03886509)
+        self.declare_parameter('upper_camera_y', 0.00772565)
+        self.declare_parameter('upper_camera_z', 0.00450755)
+        self.declare_parameter('upper_camera_yaw', 0.0)
+        self.declare_parameter('upper_camera_pitch', 0.0)
+        self.declare_parameter('upper_camera_roll', 0.0)
+        self.declare_parameter('side_camera_x', 0.03886509)
+        self.declare_parameter('side_camera_y', 0.00772565)
+        self.declare_parameter('side_camera_z', 0.00450755)
+        self.declare_parameter('side_camera_yaw', 0.0)
+        self.declare_parameter('side_camera_pitch', 0.0)
+        self.declare_parameter('side_camera_roll', 0.0)
 
         self.render_pyramid = self.get_parameter('render_pyramid').get_parameter_value().bool_value
         self.render_trajectory = self.get_parameter('render_trajectory').get_parameter_value().bool_value
         self.render_image = self.get_parameter('render_image').get_parameter_value().bool_value
+        self.render_robot = self.get_parameter('render_robot').get_parameter_value().bool_value
 
         self.point_size_point_cloud = self.get_parameter('point_size').get_parameter_value().integer_value
 
@@ -70,6 +100,8 @@ class PointCloudViewerNode(Node):
 
         self.depth_frame_width = self.get_parameter('point_cloud_width').get_parameter_value().integer_value
         self.depth_frame_height = self.get_parameter('point_cloud_height').get_parameter_value().integer_value
+
+        self.robot_model = self.get_parameter('robot_model').get_parameter_value().string_value
         
         self.hfov = self.get_parameter('hfov').get_parameter_value().integer_value
         self.vfov = self.get_parameter('vfov').get_parameter_value().integer_value
@@ -85,13 +117,30 @@ class PointCloudViewerNode(Node):
 
         self.cam = Camera()
 
-        self.camera_x = self.get_parameter('camera_x').get_parameter_value().double_value
-        self.camera_y = self.get_parameter('camera_y').get_parameter_value().double_value
-        self.camera_z = self.get_parameter('camera_z').get_parameter_value().double_value
+        self.frontal_camera_x = self.get_parameter('frontal_camera_x').get_parameter_value().double_value
+        self.frontal_camera_y = self.get_parameter('frontal_camera_y').get_parameter_value().double_value
+        self.frontal_camera_z = self.get_parameter('frontal_camera_z').get_parameter_value().double_value
+        self.frontal_camera_yaw = self.get_parameter('frontal_camera_yaw').get_parameter_value().double_value
+        self.frontal_camera_pitch = self.get_parameter('frontal_camera_pitch').get_parameter_value().double_value
+        self.frontal_camera_roll = self.get_parameter('frontal_camera_roll').get_parameter_value().double_value
+
+        self.upper_camera_x = self.get_parameter('upper_camera_x').get_parameter_value().double_value
+        self.upper_camera_y = self.get_parameter('upper_camera_y').get_parameter_value().double_value
+        self.upper_camera_z = self.get_parameter('upper_camera_z').get_parameter_value().double_value
+        self.upper_camera_yaw = self.get_parameter('upper_camera_yaw').get_parameter_value().double_value
+        self.upper_camera_pitch = self.get_parameter('upper_camera_pitch').get_parameter_value().double_value
+        self.upper_camera_roll = self.get_parameter('upper_camera_roll').get_parameter_value().double_value
+
+        self.side_camera_x = self.get_parameter('side_camera_x').get_parameter_value().double_value
+        self.side_camera_y = self.get_parameter('side_camera_y').get_parameter_value().double_value
+        self.side_camera_z = self.get_parameter('side_camera_z').get_parameter_value().double_value
+        self.side_camera_yaw = self.get_parameter('side_camera_yaw').get_parameter_value().double_value
+        self.side_camera_pitch = self.get_parameter('side_camera_pitch').get_parameter_value().double_value
+        self.side_camera_roll = self.get_parameter('side_camera_roll').get_parameter_value().double_value
 
         self.cam.setParams(self.hfov, self.vfov, (0, 0, self.screen_width, self.screen_height))
-        self.cam.setTargetPos([1.0, 0.0, 0.0])
-        self.cam.setEyePos([self.camera_x, self.camera_y, self.camera_z])
+        self.cam.setTargetPos([self.frontal_camera_yaw, self.frontal_camera_pitch, self.frontal_camera_roll])
+        self.cam.setEyePos([self.frontal_camera_x, self.frontal_camera_y, self.frontal_camera_z])
         self.viewer = Viewer(
             screen_width=self.screen_width, 
             screen_height=self.screen_height, 
@@ -100,7 +149,7 @@ class PointCloudViewerNode(Node):
             cam_velocity=self.get_parameter('camera_velocity').get_parameter_value().double_value
         )
 
-        self.viewer.on_reset_camera = self.reset_camera
+        self.view_type = ''
 
         self.ctx = moderngl.create_context()
         self.ctx.enable(moderngl.BLEND | moderngl.DEPTH_TEST)
@@ -117,15 +166,15 @@ class PointCloudViewerNode(Node):
         self.trajectory_points = []
         self.trajectory = None
 
-        self.initial_eye = np.array([self.camera_x, self.camera_y, self.camera_z], dtype=np.float32)
-        self.initial_target = np.array([1.0, 0.0, 0.0], dtype=np.float32)
+        self.initial_eye = np.array([self.frontal_camera_x, self.frontal_camera_y, self.frontal_camera_z], dtype=np.float32)
+        self.initial_target = np.array([self.frontal_camera_yaw, self.frontal_camera_pitch, self.frontal_camera_roll], dtype=np.float32)
 
 
         self.create_subscription(
             PointCloud2,
             self.get_parameter('point_cloud_topic').get_parameter_value().string_value,
             self.pointcloud_cb,
-            10
+            qos_profile_sensor_data
         )
 
         self.create_subscription(
@@ -139,32 +188,82 @@ class PointCloudViewerNode(Node):
             Image,
             self.get_parameter('rgb_image_topic').get_parameter_value().string_value,
             self.camera_image_cb,
-            10
+            qos_profile_sensor_data
         )
 
         self.create_subscription(
-            Bool,
+            String,
             self.get_parameter('reset_view_topic').get_parameter_value().string_value,
-            lambda msg: self.reset_camera(),
+            self.camera_view_cb,
             10
         )
 
         self.get_logger().info("3D Viewer is Ready")
 
-    def reset_camera(self):
-        self.cam.setEyePos(self.initial_eye)
-        self.cam.setTargetPos(self.initial_target)
+    def camera_view_cb(self, msg):
+        """
+        Callback for receiving camera view commands.
+
+        Args:
+            msg (std_msgs.msg.String): The incoming camera view command.
+
+        This function updates the camera position and target based on the received command.
+        """
+        if msg.data == 'frontal':
+            self.cam.setEyePos(self.initial_eye)
+            self.cam.setTargetPos(self.initial_target)
+
+        elif msg.data == 'upper':
+            self.cam.setEyePos([self.upper_camera_x, self.upper_camera_y, self.upper_camera_z])
+            self.cam.setTargetPos([self.upper_camera_yaw, self.upper_camera_pitch, self.upper_camera_roll])
+
+        elif msg.data == 'side':
+            self.cam.setEyePos([self.side_camera_x, self.side_camera_y, self.side_camera_z])
+            self.cam.setTargetPos([self.side_camera_yaw, self.side_camera_pitch, self.side_camera_roll])
+
 
     def camera_image_cb(self, msg):
+        """
+        Callback for receiving RGB image data.
+
+
+        Args:
+            msg (sensor_msgs.msg.Image): The incoming RGB image message.
+
+        This function converts the image data from the ROS message into a numpy array for rendering
+        in the 3D viewer.
+        """
+
         self.actual_image = np.frombuffer(msg.data, dtype=np.uint8).reshape((msg.height, msg.width, 3))
 
     def trajectory_cb(self, msg):
+        """
+        Callback for receiving trajectory points as MarkerArray.
+
+        Args:
+            msg (visualization_msgs.msg.MarkerArray): The incoming trajectory points.
+
+        This function extracts the trajectory points from the message and updates the `ShapeTrajectory`
+        object for rendering in the viewer.
+        """
+
+
         self.trajectory_points = []
         for marker in msg.markers:
             self.trajectory_points.append([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z]) 
         self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 0.5])
 
     def pointcloud_cb(self, msg):
+        """
+        Callback for receiving point cloud data.
+
+        Args:
+            msg (sensor_msgs.msg.PointCloud2): The incoming point cloud message.
+
+        This function extracts XYZ coordinates and RGB values from the point cloud message and updates
+        the arrays used for rendering the point cloud in the 3D viewer.
+        """
+        
         try:
             num_points = msg.width * msg.height
 
@@ -195,10 +294,20 @@ class PointCloudViewerNode(Node):
             self.get_logger().error("Error processing pointcloud: %s" % str(e))
 
     def update(self, dt):
+        """
+        Updates the 3D viewer, rendering the current scene.
+
+        Args:
+            dt (float): The time elapsed since the last update.
+
+        This function handles the rendering of the 3D scene's components.
+        """
+
         try:
             self.viewer.update(dt)
             
-            self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
+            #self.get_logger().info(f'Camera position: {self.cam.getEyePos()}')
+            #self.get_logger().info(f'Camera orientation: {self.cam.getEyePolar()}')
 
             self.cloud.update_points(
                 array_xyz=self.array_frames_xyz,
@@ -238,7 +347,6 @@ class PointCloudViewerNode(Node):
                     rot=RotIdentity(), 
                     size=[self.visualizer_width, self.visualizer_height]
                 )
-
 
             if self.render_pyramid:
                 self.pyramid.render(
