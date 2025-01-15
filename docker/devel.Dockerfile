@@ -127,7 +127,10 @@ RUN sysctl net.ipv4.ipfrag_time=3
 RUN sysctl net.ipv4.ipfrag_high_thresh=134217728
 
 RUN pip install usd-core \
-    trimesh
+    trimesh \
+    ping3 \
+    pyqtgraph
+
 RUN pip install --upgrade networkx
 
 RUN echo "export FASTDDS_BUILTIN_TRANSPORTS=LARGE_DATA?max_msg_size=1MB&soets_size=1MB&non_blocking=true&tcp_negotiation_timeout=50" >> ~/.bashrc

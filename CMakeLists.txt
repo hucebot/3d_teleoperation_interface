@@ -51,6 +51,11 @@ install(PROGRAMS
   scripts/3d_interface/3d_viewer.py
   scripts/tools/streamdeck.py
   scripts/tools/trajectory_bridge.py
+
+  scripts/teleoperation/network_window.py
+  scripts/teleoperation/robot_window.py
+  scripts/teleoperation/stream_window.py
+
   ros2_3d_interface/utilities/camera.py
   ros2_3d_interface/utilities/shape.py
   ros2_3d_interface/utilities/utils.py
