@@ -1,8 +1,6 @@
 general:
   robot_name: Tiago
   robot_ip: 192.168.50.162
-  local_interface_name: wlp2s0
-  wifi_interface_name: wlp2s0
 
   limit_torque: 10.0
   limit_force: 70.0
@@ -11,19 +9,35 @@ general:
 
 wifi_plots:
   window_title: Network Window
+  interface: wlp2s0f0
   plot_period: 0.5
   plot_window: 10.0
   server_name: google.com
   router_ip: 192.168.50.1
-  x_position: 300
-  y_position: 100
-  width: 400
-  height: 800
+  x_position: 3000
+  y_position: 0
+  width: 500
+  height: 1200
   x_min: 0
-  x_max: 60
-  y_min: 0
-  y_max: 500
-  memory_limit: 50
+  x_max: 100
+  y_robot_ping_min: 0
+  y_robot_ping_max: 100
+  y_server_ping_min: 0
+  y_server_ping_max: 100
+  y_router_ping_min: 0
+  y_router_ping_max: 100
+  y_byte_sent_min: -10
+  y_byte_sent_max: 40
+  y_byte_received_min: -10
+  y_byte_received_max: 40
+  y_packet_sent_min: -10
+  y_packet_sent_max: 40
+  y_packet_received_min: -10
+  y_packet_received_max: 40
+  y_mean_qbss_min: 0
+  y_mean_qbss_max: 100
+
+  memory_limit: 20
 
 gstreamer:
   gstreamer_server: 192.168.50.162

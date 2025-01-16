@@ -37,8 +37,13 @@ RUN pip install\
     tqdm \
     urdfpy \
     streamdeck \
-    pillow
+    pillow \
+    usd-core \
+    trimesh \
+    ping3 \
+    pyqtgraph
 
+RUN pip install --upgrade networkx
 RUN pip install --upgrade numpy==1.23.5
 
 ###### Install ROS2
@@ -95,7 +100,8 @@ RUN  apt install -y \
     python3-rosdep \
     gedit \
     git \
-    libpcap-dev
+    libpcap-dev \
+    iw
 
 RUN apt-get install -yy python3-setuptools \
     && apt-get install -yy python3-pip \
@@ -112,26 +118,20 @@ RUN apt-get install -yy python3-setuptools \
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 ###### Install ROBOT Meshes
-# Tiago Dual Manipulator
+# Tiago Dual Manipulator - INRIA
 WORKDIR /ros2_ws/robot_data
 RUN git clone --filter=blob:none --sparse https://github.com/NOSALRO/robot_dart.git
 WORKDIR /ros2_ws/robot_data/robot_dart
 RUN git sparse-checkout set utheque
 RUN rm -rf /ros2_ws/robot_data/robot_dart/src
 
+# Tiago Dual Manipulator - PAL
 WORKDIR /ros2_ws/src
 RUN git clone --branch=humble-devel https://github.com/pal-robotics/tiago_dual_robot.git
 
-###### Update kernel buffer
+###### Update Buffer
 RUN sysctl net.ipv4.ipfrag_time=3
 RUN sysctl net.ipv4.ipfrag_high_thresh=134217728
-
-RUN pip install usd-core \
-    trimesh \
-    ping3 \
-    pyqtgraph
-
-RUN pip install --upgrade networkx
 
 RUN echo "export FASTDDS_BUILTIN_TRANSPORTS=LARGE_DATA?max_msg_size=1MB&soets_size=1MB&non_blocking=true&tcp_negotiation_timeout=50" >> ~/.bashrc
 

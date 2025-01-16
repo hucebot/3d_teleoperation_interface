@@ -24,7 +24,7 @@ class WifiPlot(QMainWindow):
 
         styles = {"color": "#ffffff", "font-size": "12px", "font-weight": "bold"}
         self.graphWidget.setLabel("left", self.y_label, **styles)
-        self.graphWidget.setLabel("bottom", self.x_label, **styles)
+        #self.graphWidget.setLabel("bottom", self.x_label, **styles)
 
         self.graphWidget.addLegend()
 

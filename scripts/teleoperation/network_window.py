@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import sys
-import threading
+import sys, threading, time, psutil, subprocess
+from functools import partial
 
 import rclpy
 from rclpy.node import Node
@@ -22,7 +22,12 @@ class NetworkWindow(Node):
         super().__init__('network_window_node')
         self.signal_manager = signal_manager
         plot_period = config_file["wifi_plots"]["plot_period"]
-        self.timer = self.create_timer(plot_period, self.check_network_status)
+        interface = config_file["wifi_plots"]["interface"]
+        self.create_timer(plot_period, self.check_connection_ping)
+        self.create_timer(
+            plot_period,
+            partial(self.check_network_status, interval=plot_period, interface=interface)
+        )
 
         self.config = config_file
 
@@ -32,8 +37,50 @@ class NetworkWindow(Node):
 
         self.get_logger().info("Robot Visualizer Node started!")
 
-    def check_network_status(self):
+    def get_mean_qbss(self, interface):
         try:
+            result = subprocess.run(["iw", "dev", interface, "link"], capture_output=True, text=True)
+            if result.returncode == 0:
+                for line in result.stdout.split("\n"):
+                    if "signal" in line:
+                        signal_strength = int(line.split(":")[-1].strip().split()[0])
+                        return signal_strength
+            return None
+        except Exception as e:
+            print(e)
+
+    def check_network_status(self, interval=0.2, interface='wlp2s0f0'):
+        try:
+            net1 = psutil.net_io_counters(pernic=True)[interface]
+            time.sleep(interval)
+            net2 = psutil.net_io_counters(pernic=True)[interface]
+
+            byte_sent_per_sec = (net2.bytes_sent - net1.bytes_sent) / interval
+            byte_recv_per_sec = (net2.bytes_recv - net1.bytes_recv) / interval
+            packet_sent_per_sec = (net2.packets_sent - net1.packets_sent) / interval
+            packet_recv_per_sec = (net2.packets_recv - net1.packets_recv) / interval
+
+            avg_byte = (byte_sent_per_sec + byte_recv_per_sec) / 2
+            avg_packet = (packet_sent_per_sec + packet_recv_per_sec) / 2
+
+            self.signal_manager.status_signal.emit(f"Byte : {avg_byte / 1024:.2f} KB/s")
+            self.signal_manager.status_signal.emit(f"Packet : {avg_packet:.2f} packets/s")
+
+            mean_qbss = self.get_mean_qbss(interface)
+            if mean_qbss is not None:
+                self.signal_manager.status_signal.emit(f"Mean QBSS : {mean_qbss:.2f} dBm")
+
+
+
+        except Exception as e:
+            error_message = f"Error checking network status: {e}"
+            self.signal_manager.status_signal.emit(error_message)
+            self.get_logger().error(error_message)
+
+
+    def check_connection_ping(self):
+        try:
+
             response_time = ping(self.robot_ip, timeout=2)
             if response_time is None:
                 message = f"The robot {self.robot_ip} is not responding."
@@ -79,21 +126,43 @@ class NetworkWindowGUI(QMainWindow):
         self.plots["Robot"] = WifiPlot(
             "Robot Ping", "Time", "Latency (ms)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
-            [self.config_file["wifi_plots"]["y_min"], self.config_file["wifi_plots"]["y_max"]], 
+            [self.config_file["wifi_plots"]["y_robot_ping_min"], self.config_file["wifi_plots"]["y_robot_ping_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
         self.plots["Server"] = WifiPlot(
             "Server Ping", "Time", "Latency (ms)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
-            [self.config_file["wifi_plots"]["y_min"], self.config_file["wifi_plots"]["y_max"]], 
+            [self.config_file["wifi_plots"]["y_server_ping_min"], self.config_file["wifi_plots"]["y_server_ping_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
         self.plots["Router"] = WifiPlot(
             "Router Ping", "Time", "Latency (ms)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
-            [self.config_file["wifi_plots"]["y_min"], self.config_file["wifi_plots"]["y_max"]], 
+            [self.config_file["wifi_plots"]["y_router_ping_min"], self.config_file["wifi_plots"]["y_router_ping_max"]], 
+            memory_limit=self.config_file["wifi_plots"]["memory_limit"]
+        )
+
+        self.plots["Byte"] = WifiPlot(
+            "Byte", "Time", "Byte (KB/s)", 
+            [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
+            [self.config_file["wifi_plots"]["y_byte_sent_min"], self.config_file["wifi_plots"]["y_byte_sent_max"]], 
+            memory_limit=self.config_file["wifi_plots"]["memory_limit"]
+        )
+
+        self.plots["Packet"] = WifiPlot(
+            "Packet", "Time", "Packet (packets/s)", 
+            [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
+            [self.config_file["wifi_plots"]["y_packet_sent_min"], self.config_file["wifi_plots"]["y_packet_sent_max"]], 
+            memory_limit=self.config_file["wifi_plots"]["memory_limit"]
+        )
+
+
+        self.plots["Mean QBSS"] = WifiPlot(
+            "Mean QBSS", "Time", "Signal Strength (dBm)", 
+            [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
+            [self.config_file["wifi_plots"]["y_mean_qbss_min"], self.config_file["wifi_plots"]["y_mean_qbss_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
@@ -125,6 +194,27 @@ class NetworkWindowGUI(QMainWindow):
                 try:
                     latency = float(message.split("Latency ")[-1].replace(" ms", "").strip())
                     self.plots[server].update_plot(self.time_counter, latency)
+                except ValueError:
+                    pass
+
+            if server in message and "KB/s" in message:
+                try:
+                    value = float(message.split(":")[-1].replace("KB/s", "").strip())
+                    self.plots[server].update_plot(self.time_counter, value)
+                except ValueError:
+                    pass
+
+            if server in message and "packets/s" in message:
+                try:
+                    value = float(message.split(":")[-1].replace("packets/s", "").strip())
+                    self.plots[server].update_plot(self.time_counter, value)
+                except ValueError:
+                    pass
+
+            if server in message and "Mean QBSS" in message:
+                try:
+                    value = float(message.split(":")[-1].replace("dBm", "").strip())
+                    self.plots[server].update_plot(self.time_counter, value)
                 except ValueError:
                     pass
 
