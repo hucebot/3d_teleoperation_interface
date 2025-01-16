@@ -5,10 +5,13 @@ https://opensource.org/licenses/BSD-3-Clause)
 [![Ros Version](https://img.shields.io/badge/ROS2-Humble-green)](
 https://docs.ros.org/en/humble/index.html)
 
+| Teleoperation View                                |
+|---------------------------------------------------|
+| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/teleoperation_window.png" alt="Teleoperation View" width="400"> |
 
-| Verify Line Of Sight                                  | 3D Visualizer of the trajectory                     |
+| Verify Line Of Sight                                  | 3D Visualizer                     |
 |-------------------------------------------------------|-----------------------------------------------------|
-| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/line_of_sight.gif" alt="Line of Sight Verification GIF" width="400"> | <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/trajectory_visualization.gif" alt="Trajectory Visualization GIF" width="400"> |
+| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/line_of_sight.gif" alt="Line of Sight Verification" width="400"> | <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/trajectory_visualization.gif" alt="3D Visualizer" width="400"> |
 
 
 ## Table of Contents

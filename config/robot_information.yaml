@@ -1,0 +1,64 @@
+general:
+  name: Tiago
+
+controllers:
+  head:
+    head_controller
+  left_arm:
+    arm_controller
+  right_arm:
+    arm_controller
+  left_leg:
+    leg_controller
+  right_leg:
+    leg_controller
+  wheels:
+    wheel_controller
+  grippers:
+    gripper_controller
+
+motors:
+  head:
+    head_1_motor
+    head_2_motor
+  left_arm:
+    arm_1_motor
+    arm_2_motor
+    arm_3_motor
+    arm_4_motor
+    arm_5_motor
+    arm_6_motor
+    arm_7_motor
+
+  right_arm:
+    arm_1_motor
+    arm_2_motor
+    arm_3_motor
+    arm_4_motor
+    arm_5_motor
+    arm_6_motor
+    arm_7_motor
+
+  left_leg:
+    leg_1_motor
+    leg_2_motor
+    leg_3_motor
+    leg_4_motor
+    leg_5_motor
+    leg_6_motor
+    
+  right_leg:
+    leg_1_motor
+    leg_2_motor
+    leg_3_motor
+    leg_4_motor
+    leg_5_motor
+    leg_6_motor
+
+  wheels:
+    wheel_right_motor
+    wheel_left_motor
+
+  grippers:
+    gripper_right_motor
+    gripper_left_motor

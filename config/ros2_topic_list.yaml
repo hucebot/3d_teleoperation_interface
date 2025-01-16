@@ -1,0 +1,9 @@
+ros2_topic_list:
+  /power/battery_level
+  /power/is_charging
+  /power/is_docked
+  /power/is_emergency
+  /power/is_plugged
+  /power/time_emergency
+  /power_board
+  /power_status

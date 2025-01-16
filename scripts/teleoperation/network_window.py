@@ -70,8 +70,6 @@ class NetworkWindow(Node):
             if mean_qbss is not None:
                 self.signal_manager.status_signal.emit(f"Mean QBSS : {mean_qbss:.2f} dBm")
 
-
-
         except Exception as e:
             error_message = f"Error checking network status: {e}"
             self.signal_manager.status_signal.emit(error_message)
@@ -124,35 +122,35 @@ class NetworkWindowGUI(QMainWindow):
 
         self.plots = {}
         self.plots["Robot"] = WifiPlot(
-            "Robot Ping", "Time", "Latency (ms)", 
+            "Robot Connection", "Time", "Ping (ms)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
             [self.config_file["wifi_plots"]["y_robot_ping_min"], self.config_file["wifi_plots"]["y_robot_ping_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
         self.plots["Server"] = WifiPlot(
-            "Server Ping", "Time", "Latency (ms)", 
+            "Server Connection", "Time", "Ping (ms)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
             [self.config_file["wifi_plots"]["y_server_ping_min"], self.config_file["wifi_plots"]["y_server_ping_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
         self.plots["Router"] = WifiPlot(
-            "Router Ping", "Time", "Latency (ms)", 
+            "Router Connection", "Time", "Ping (ms)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
             [self.config_file["wifi_plots"]["y_router_ping_min"], self.config_file["wifi_plots"]["y_router_ping_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
         self.plots["Byte"] = WifiPlot(
-            "Byte", "Time", "Byte (KB/s)", 
+            "KBytes/s", "Time", "Byte (KB/s)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
             [self.config_file["wifi_plots"]["y_byte_sent_min"], self.config_file["wifi_plots"]["y_byte_sent_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
         )
 
         self.plots["Packet"] = WifiPlot(
-            "Packet", "Time", "Packet (packets/s)", 
+            "Packets/s", "Time", "Packet (packets/s)", 
             [self.config_file["wifi_plots"]["x_min"], self.config_file["wifi_plots"]["x_max"]], 
             [self.config_file["wifi_plots"]["y_packet_sent_min"], self.config_file["wifi_plots"]["y_packet_sent_max"]], 
             memory_limit=self.config_file["wifi_plots"]["memory_limit"]
@@ -171,13 +169,8 @@ class NetworkWindowGUI(QMainWindow):
         for plot in self.plots.values():
             plots_layout.addWidget(plot.graphWidget)
 
-        self.bottom_label = QLabel("Network Status")
-        self.bottom_label.setAlignment(Qt.AlignCenter)
-        self.bottom_label.setStyleSheet("border: 1px solid black; background-color: lightgray;")
-
         main_layout = QVBoxLayout()
         main_layout.addLayout(plots_layout)
-        main_layout.addWidget(self.bottom_label)
 
         central_widget = QWidget()
         central_widget.setLayout(main_layout)
@@ -187,8 +180,6 @@ class NetworkWindowGUI(QMainWindow):
         self.time_counter = 0
 
     def handle_status_message(self, message):
-        self.bottom_label.setText(message)
-
         for server in self.plots.keys():
             if server in message and "Latency" in message:
                 try:
