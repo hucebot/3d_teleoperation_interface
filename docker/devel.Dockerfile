@@ -129,6 +129,13 @@ RUN rm -rf /ros2_ws/robot_data/robot_dart/src
 WORKDIR /ros2_ws/src
 RUN git clone --branch=humble-devel https://github.com/pal-robotics/tiago_dual_robot.git
 
+###### Install PySpaceMouse
+RUN pip3 install pyspacemouse
+RUN pip3 install git+https://github.com/bglopez/python-easyhid.git
+RUN pip3 install hidapi
+RUN pip3 install scipy
+RUN apt-get -yy install libhidapi-dev
+
 ###### Update Buffer
 RUN sysctl net.ipv4.ipfrag_time=3
 RUN sysctl net.ipv4.ipfrag_high_thresh=134217728

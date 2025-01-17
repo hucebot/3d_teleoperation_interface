@@ -55,6 +55,7 @@ install(PROGRAMS
   scripts/teleoperation/network_window.py
   scripts/teleoperation/robot_window.py
   scripts/teleoperation/stream_window.py
+  scripts/teleoperation/insta_360_controller.py
 
   ros2_3d_interface/utilities/camera.py
   ros2_3d_interface/utilities/shape.py
