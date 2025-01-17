@@ -1,0 +1,3 @@
+ros2_node_list:
+  ros_control_bridge
+  ros2_control_demo_controller

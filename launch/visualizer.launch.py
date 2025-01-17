@@ -6,81 +6,78 @@ from ament_index_python.packages import get_package_share_directory
 import os
 import yaml
 
-def generate_launch_description():
-    config_file = os.path.join(
-        get_package_share_directory('ros2_3d_interface'),
-        'config',
-        'general_configuration.yaml'
-    )
+from ros2_3d_interface.common.read_configuration import read_general_configuration, read_3d_configuration
 
-    with open(config_file, 'r') as file:
-        config = yaml.safe_load(file)
+def generate_launch_description():
+    config_3d_file = read_3d_configuration()
+
+    general_config = read_general_configuration()
 
     return LaunchDescription(
-        generate_nodes(config)
+        generate_nodes(config_3d_file, general_config)
     )
 
-def generate_nodes(config_file):
+def generate_nodes(config_3d_file, general_config):
     # General parameters
-    render_pyramid = config_file['3d_viewer']['general']['render_pyramid']
-    render_trajectory = config_file['3d_viewer']['general']['render_trajectory']
-    render_robot = config_file['3d_viewer']['general']['render_robot']
-    render_image = config_file['3d_viewer']['general']['render_image']
-    render_hz = config_file['3d_viewer']['general']['render_hz']
-    camera_velocity = config_file['3d_viewer']['general']['camera_velocity']
+    render_pyramid = general_config['general']['render_pyramid']
+    render_trajectory = general_config['general']['render_trajectory']
+    render_robot = general_config['general']['render_robot']
+    render_image = general_config['general']['render_image']
+    render_hz = general_config['general']['render_hz']
+    camera_velocity = general_config['general']['camera_velocity']
 
-    robot_model = config_file['3d_viewer']['robot']['model']
-    robot_version = config_file['3d_viewer']['robot']['version']
+    robot_model = config_3d_file['robot']['model']
+    robot_version = config_3d_file['robot']['version']
 
-    rgb_image_width = config_file['3d_viewer']['rgb_image']['width']
-    rgb_image_height = config_file['3d_viewer']['rgb_image']['height']
-    rgb_image_topic = config_file['3d_viewer']['rgb_image']['topic']
-    visualizer_x = config_file['3d_viewer']['rgb_image']['visualizer_x']
-    visualizer_y = config_file['3d_viewer']['rgb_image']['visualizer_y']
-    visualizer_z = config_file['3d_viewer']['rgb_image']['visualizer_z']
-    visualizer_width = config_file['3d_viewer']['rgb_image']['visualizer_width']
-    visualizer_height = config_file['3d_viewer']['rgb_image']['visualizer_height']
+    rgb_image_width = config_3d_file['rgb_image']['width']
+    rgb_image_height = config_3d_file['rgb_image']['height']
+    rgb_image_topic = config_3d_file['rgb_image']['topic']
+    visualizer_x = config_3d_file['rgb_image']['visualizer_x']
+    visualizer_y = config_3d_file['rgb_image']['visualizer_y']
+    visualizer_z = config_3d_file['rgb_image']['visualizer_z']
+    visualizer_width = config_3d_file['rgb_image']['visualizer_width']
+    visualizer_height = config_3d_file['rgb_image']['visualizer_height']
 
-    use_streamdeck = config_file['3d_viewer']['streamdeck']['use_streamdeck']
+    use_streamdeck = config_3d_file['streamdeck']['use_streamdeck']
 
-    reset_view_topic = config_file['3d_viewer']['streamdeck']['reset_view_topic']
+    reset_view_topic = config_3d_file['streamdeck']['reset_view_topic']
 
-    point_cloud_width = config_file['3d_viewer']['point_cloud']['width']
-    point_cloud_height = config_file['3d_viewer']['point_cloud']['height']
-    point_cloud_size_multiplier = config_file['3d_viewer']['point_cloud']['size_multiplier']
-    point_size = config_file['3d_viewer']['point_cloud']['point_size']
-    hfov = config_file['3d_viewer']['point_cloud']['hfov']
-    vfov = config_file['3d_viewer']['point_cloud']['vfov']
-    point_cloud_topic = config_file['3d_viewer']['point_cloud']['topic']
+    point_cloud_width = config_3d_file['point_cloud']['width']
+    point_cloud_height = config_3d_file['point_cloud']['height']
+    point_cloud_size_multiplier = config_3d_file['point_cloud']['size_multiplier']
+    point_size = config_3d_file['point_cloud']['point_size']
+    hfov = config_3d_file['point_cloud']['hfov']
+    vfov = config_3d_file['point_cloud']['vfov']
+    point_cloud_topic = config_3d_file['point_cloud']['topic']
 
     # Trajectory parameters
-    trajectory_points_topic = config_file['trajectory']['trajectory_points_topic']
-    dummy_trajectory = config_file['trajectory']['dummy_trajectory']
+    trajectory_points_topic = config_3d_file['trajectory']['trajectory_points_topic']
+    dummy_trajectory = config_3d_file['trajectory']['dummy_trajectory']
 
-    name = config_file['3d_viewer']['main_window']['name']
-    window_width = config_file['3d_viewer']['main_window']['width']
-    window_height = config_file['3d_viewer']['main_window']['height']
+    name = config_3d_file['main_window']['name']
+    window_width = config_3d_file['main_window']['width']
+    window_height = config_3d_file['main_window']['height']
 
-    frontal_camera_x = config_file['3d_viewer']['main_window']['frontal_camera_x']
-    frontal_camera_y = config_file['3d_viewer']['main_window']['frontal_camera_y']
-    frontal_camera_z = config_file['3d_viewer']['main_window']['frontal_camera_z']
-    frontal_camera_yaw = config_file['3d_viewer']['main_window']['frontal_camera_yaw']
-    frontal_camera_pitch = config_file['3d_viewer']['main_window']['frontal_camera_pitch']
-    frontal_camera_roll = config_file['3d_viewer']['main_window']['frontal_camera_roll']
+    frontal_camera_x = config_3d_file['main_window']['frontal_camera_x']
+    frontal_camera_y = config_3d_file['main_window']['frontal_camera_y']
+    frontal_camera_z = config_3d_file['main_window']['frontal_camera_z']
+    frontal_camera_yaw = config_3d_file['main_window']['frontal_camera_yaw']
+    frontal_camera_pitch = config_3d_file['main_window']['frontal_camera_pitch']
+    frontal_camera_roll = config_3d_file['main_window']['frontal_camera_roll']
 
-    upper_camera_x = config_file['3d_viewer']['main_window']['upper_camera_x']
-    upper_camera_y = config_file['3d_viewer']['main_window']['upper_camera_y']
-    upper_camera_z = config_file['3d_viewer']['main_window']['upper_camera_z']
-    upper_camera_yaw = config_file['3d_viewer']['main_window']['upper_camera_yaw']
-    upper_camera_pitch = config_file['3d_viewer']['main_window']['upper_camera_pitch']
-    upper_camera_roll = config_file['3d_viewer']['main_window']['upper_camera_roll']
+    upper_camera_x = config_3d_file['main_window']['upper_camera_x']
+    upper_camera_y = config_3d_file['main_window']['upper_camera_y']
+    upper_camera_z = config_3d_file['main_window']['upper_camera_z']
+    upper_camera_yaw = config_3d_file['main_window']['upper_camera_yaw']
+    upper_camera_pitch = config_3d_file['main_window']['upper_camera_pitch']
+    upper_camera_roll = config_3d_file['main_window']['upper_camera_roll']
 
-    side_camera_x = config_file['3d_viewer']['main_window']['side_camera_x']
-    side_camera_y = config_file['3d_viewer']['main_window']['side_camera_y']
-    side_camera_z = config_file['3d_viewer']['main_window']['side_camera_z']
-    side_camera_yaw = config_file['3d_viewer']['main_window']['side_camera_yaw']
-    side_camera_pitch = config_file['3d_viewer']['main_window']['side_camera_pitch']
-    side_camera_roll = config_file['3d_viewer']['main_window']['side_camera_roll']
+    side_camera_x = config_3d_file['main_window']['side_camera_x']
+    side_camera_y = config_3d_file['main_window']['side_camera_y']
+    side_camera_z = config_3d_file['main_window']['side_camera_z']
+    side_camera_yaw = config_3d_file['main_window']['side_camera_yaw']
+    side_camera_pitch = config_3d_file['main_window']['side_camera_pitch']
+    side_camera_roll = config_3d_file['main_window']['side_camera_roll']
 
     node_list = []
 

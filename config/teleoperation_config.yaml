@@ -1,0 +1,76 @@
+general:
+  robot_name: Tiago
+  robot_ip: 192.168.50.162
+
+  limit_torque: 10.0
+  limit_force: 70.0
+  left_wrist_topic: /left_wrist_ft/corrected
+  right_wrist_topic: /right_wrist_ft/corrected
+
+teleop_window:
+  window_title: Teleoperation Window
+  window_width: 1000
+  window_height: 1400
+  window_x: 300
+  window_y: 0
+
+wifi_plots:
+  window_title: Network Status Window
+  interface: wlp2s0f0
+  plot_period: 0.5
+  plot_window: 10.0
+  server_name: google.com
+  router_ip: 192.168.50.1
+  x_position: 4500
+  y_position: 0
+  width: 500
+  height: 1400
+  x_min: 0
+  x_max: 100
+  y_robot_ping_min: 0
+  y_robot_ping_max: 100
+  y_server_ping_min: 0
+  y_server_ping_max: 100
+  y_router_ping_min: 0
+  y_router_ping_max: 100
+  y_byte_sent_min: -10
+  y_byte_sent_max: 40
+  y_byte_received_min: -10
+  y_byte_received_max: 40
+  y_packet_sent_min: -10
+  y_packet_sent_max: 40
+  y_packet_received_min: -10
+  y_packet_received_max: 40
+  y_mean_qbss_min: 0
+  y_mean_qbss_max: 100
+
+  memory_limit: 20
+
+gstreamer:
+  gstreamer_server: 192.168.50.162
+  use_rtcp: false
+  gst_verbose: true
+  ntp_server: time.apple.com
+
+  cameras:
+    camera_1:
+      side: left
+      port: 5000
+      name: left_gripper
+      payload: 96
+      width: 640
+      height: 480
+    camera_2:
+      side: center
+      port: 5001
+      name: head
+      payload: 96
+      width: 640
+      height: 480
+    camera_3:
+      side: right
+      port: 5002
+      name: right_gripper
+      payload: 96
+      width: 640
+      height: 480

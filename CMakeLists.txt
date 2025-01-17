@@ -48,11 +48,15 @@ install(TARGETS
 ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
-  scripts/3d_viewer.py
-  scripts/trajectory.py
-  scripts/streamdeck.py
-  scripts/trajectory_bridge.py
-  scripts/record_pcl.py
+  scripts/3d_interface/3d_viewer.py
+  scripts/tools/streamdeck.py
+  scripts/tools/trajectory_bridge.py
+
+  scripts/teleoperation/network_window.py
+  scripts/teleoperation/robot_window.py
+  scripts/teleoperation/stream_window.py
+  scripts/teleoperation/insta_360_controller.py
+
   ros2_3d_interface/utilities/camera.py
   ros2_3d_interface/utilities/shape.py
   ros2_3d_interface/utilities/utils.py
