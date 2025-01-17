@@ -7,11 +7,11 @@ https://docs.ros.org/en/humble/index.html)
 
 | Teleoperation View                                |
 |---------------------------------------------------|
-| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/teleoperation_window.png" alt="Teleoperation View" width="400"> |
+| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/main/images/teleoperation_window.png" alt="Teleoperation View" width="400"> |
 
 | Verify Line Of Sight                                  | 3D Visualizer                     |
 |-------------------------------------------------------|-----------------------------------------------------|
-| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/line_of_sight.gif" alt="Line of Sight Verification" width="400"> | <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/dev/images/trajectory_visualization.gif" alt="3D Visualizer" width="400"> |
+| <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/main/images/line_of_sight.gif" alt="Line of Sight Verification" width="400"> | <img src="https://github.com/hucebot/3d_teleoperation_interface/blob/main/images/trajectory_visualization.gif" alt="3D Visualizer" width="400"> |
 
 
 ## Table of Contents
