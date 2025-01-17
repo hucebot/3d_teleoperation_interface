@@ -46,7 +46,7 @@ public:
 
         // Llama a la función run en un hilo separado
         timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(2000),
+            std::chrono::milliseconds(500),
             std::bind(&TrajectoryNode::publish_trajectories, this));
     }
 

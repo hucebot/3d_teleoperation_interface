@@ -1,45 +1,75 @@
 
 main_window:
-  name: "Main View"
+  name: "3D Perspective"
   resizable: true
-  width: 1240
-  height: 720
+  width: 1600
+  height: 800
+  render_hz: 60
+  camera_velocity: 0.1
 
-  frontal_camera_x: -0.04284239
-  frontal_camera_y: 0.0205328
-  frontal_camera_z: 0.00186915
-  frontal_camera_yaw: 1.0
-  frontal_camera_pitch: 0.0
-  frontal_camera_roll: 0.0
+rendering:
+  pyramid: false
+  trajectory: true
+  image: false 
+  robot: true
 
-  upper_camera_x: 0.05292658
-  upper_camera_y: 0.03437775
-  upper_camera_z: -0.00236817
-  upper_camera_yaw: 0.0
-  upper_camera_pitch: 0.0
-  upper_camera_roll: 0.0
+viewports:
+  frontal:
+    use: true
+    x: 0
+    y: 0
+    width: 1000
+    height: 800
+    camera:
+      x_origin: -0.04284239
+      y_origin: 0.0205328
+      z_origin: 0.00186915
+      x_target: 1.0
+      y_target: 0.0
+      z_target: 0.0
 
-  side_camera_x: 0.94084642
-  side_camera_y: 1.43811292
-  side_camera_z: 0.10351022
-  side_camera_yaw: 0.0
-  side_camera_pitch: 0.0
-  side_camera_roll: 0.0
+  side:
+    use: true
+    x: 1000
+    y: 500
+    width: 600
+    height: 400
+    camera:
+      x_origin: 0.8
+      y_origin: 1.0
+      z_origin: 0.5
+      x_target: 0.8
+      y_target: 0.0
+      z_target: 0.0
+
+  upper:
+    use: true
+    x: 1000
+    y: 0
+    width: 600
+    height: 400
+    camera:
+      x_origin: 0.5
+      y_origin: 0.0
+      z_origin: 1.0
+      x_target: 0.8
+      y_target: 0.0
+      z_target: 0.0
 
 robot:
   model: 'H1'
   version: 'with_hand'
 
 streamdeck:
-  use_streamdeck: true
   reset_view_topic: "/streamdeck/reset_view"
 
 rgb_image:
-  visualizer_x: 0.2
-  visualizer_y: 0.22
-  visualizer_z: -0.11
-  visualizer_width: 0.15
-  visualizer_height: 0.10
+  visualizer:
+    x: 0.2
+    y: 0.22
+    z: -0.11
+    width: 0.15
+    height: 0.10
   rgb_image_width: 1280
   width: 1280
   height: 720
@@ -55,5 +85,4 @@ point_cloud:
   topic: "/camera/depth_registered/points" 
 
 trajectory:
-  trajectory_points_topic: "/trajectory_points"
-  dummy_trajectory: true
+  topic: "/trajectory_points"
