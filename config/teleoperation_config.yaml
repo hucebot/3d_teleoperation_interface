@@ -14,6 +14,14 @@ teleop_window:
   window_x: 300
   window_y: 0
 
+screen_recording:
+  x: 0
+  y: 0
+  width: 1600
+  height: 800
+  fps: 60
+  topic: /screen_recording/compressed
+
 wifi_plots:
   window_title: Network Status Window
   interface: wlp2s0f0

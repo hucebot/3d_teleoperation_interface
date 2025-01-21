@@ -3,3 +3,10 @@ ros2_node_list:
   ros2_control_demo_controller
   camera
   robot_visualizer
+  network_window
+  videostream_window
+  pointcloud_viewer
+  streamdeck_controller
+  insta360_controller
+  screen_recording
+  screen_viewer

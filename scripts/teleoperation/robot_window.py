@@ -10,7 +10,7 @@ import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
 from std_msgs.msg import String, Bool, Int16, Float32
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, CompressedImage
 
 from ros2_3d_interface.common.darkstyle import dark_style
 from ros2_3d_interface.common.read_configuration import read_ros2_node_list, read_ros2_topic_list, read_teleop_configuration, read_robot_information
@@ -37,16 +37,18 @@ class RobotVisualizerNode(Node):
         for topic in self.topic_list:
             topic_name = topic.split(",")[0]
             topic_type = topic.split(",")[1]
-            if topic_type == "std_msgs/msg/String":
+            if topic_type == "/String":
                 topic_type = String
-            elif topic_type == "std_msgs/msg/Bool":
+            elif topic_type == "/Bool":
                 topic_type = Bool
-            elif topic_type == "sensor_msgs/msg/PointCloud2":
+            elif topic_type == "/PointCloud2":
                 topic_type = PointCloud2
-            elif topic_type == "std_msgs/msg/Int16":
+            elif topic_type == "/Int16":
                 topic_type = Int16
-            elif topic_type == "std_msgs/msg/Float32":
+            elif topic_type == "/Float32":
                 topic_type = Float32
+            elif topic_type == "/CompressedImage":
+                topic_type = CompressedImage
 
             self.create_subscription(
                 topic_type,
@@ -63,7 +65,6 @@ class RobotVisualizerNode(Node):
     def get_active_nodes(self):
         discovered_nodes = self.get_node_names_and_namespaces()
         active_node_names = [name for (name, ns) in discovered_nodes]
-        print(active_node_names)
         return active_node_names
 
     def check_hz_rate(self, topic, timeout_s=2.0):

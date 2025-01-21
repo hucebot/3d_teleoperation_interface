@@ -41,7 +41,8 @@ RUN pip install\
     usd-core \
     trimesh \
     ping3 \
-    pyqtgraph
+    pyqtgraph \
+    mss
 
 RUN pip install --upgrade networkx
 RUN pip install --upgrade numpy==1.23.5

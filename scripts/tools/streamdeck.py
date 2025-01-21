@@ -14,7 +14,7 @@ from std_msgs.msg import String
 
 class StreamDeckController(Node):
     def __init__(self):
-        super().__init__('stream_deck_controller')
+        super().__init__('streamdeck_controller')
         self.exit_loop = False
 
         self.reset_view_publisher = self.create_publisher(String, '/streamdeck/reset_view', 10)

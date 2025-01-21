@@ -33,7 +33,7 @@ class PointCloudViewerNode(Node):
     """
 
     def __init__(self, config_file):
-        super().__init__('pointcloud_viewer_node')
+        super().__init__('pointcloud_viewer')
 
         self.title = config_file['main_window']['name']
         self.screen_width = config_file['main_window']['width']

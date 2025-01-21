@@ -51,6 +51,7 @@ install(PROGRAMS
   scripts/3d_interface/3d_viewer.py
   scripts/tools/streamdeck.py
   scripts/tools/trajectory_bridge.py
+  scripts/tools/screen_recording.py
 
   scripts/teleoperation/network_window.py
   scripts/teleoperation/robot_window.py

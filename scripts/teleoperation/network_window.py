@@ -19,7 +19,7 @@ class SignalManager(QObject):
 
 class NetworkWindow(Node):
     def __init__(self, signal_manager, config_file):
-        super().__init__('network_window_node')
+        super().__init__('network_window')
         self.signal_manager = signal_manager
         plot_period = config_file["wifi_plots"]["plot_period"]
         interface = config_file["wifi_plots"]["interface"]
