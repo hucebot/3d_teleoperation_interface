@@ -14,7 +14,7 @@ from ros2_3d_interface.common.darkstyle import dark_style
 
 class VideoWindowNode(Node):
     def __init__(self):
-        super().__init__('video_window_node')
+        super().__init__('videostream_window')
 
         self.left_gripper_sub = self.create_subscription(String, '/left_gripper', self.left_gripper_callback, 10)
         self.right_gripper_sub = self.create_subscription(String, '/right_gripper', self.right_gripper_callback, 10)

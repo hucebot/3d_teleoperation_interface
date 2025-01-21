@@ -14,6 +14,13 @@ teleop_window:
   window_x: 300
   window_y: 0
 
+screen_recording:
+  x: 100
+  y: 100
+  width: 1280
+  height: 720
+  fps: 120
+
 wifi_plots:
   window_title: Network Status Window
   interface: wlp2s0f0

@@ -6,7 +6,7 @@ from std_msgs.msg import Float64
 
 class Insta360Controller(Node):
     def __init__(self):
-        super().__init__('insta_360_controller')
+        super().__init__('insta360_controller')
 
         self.get_logger().info('Insta360 Controller Node Started')
         
