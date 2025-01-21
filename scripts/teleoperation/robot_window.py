@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 
-import sys, threading, subprocess, os
+import sys, threading, subprocess, os, time
+from collections import deque
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QGridLayout
 from PySide6.QtCore import Qt, QTimer, Signal, QObject
 
 import rclpy
+from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool, Int16, Float32
+from sensor_msgs.msg import PointCloud2
 
 from ros2_3d_interface.common.darkstyle import dark_style
 from ros2_3d_interface.common.read_configuration import read_ros2_node_list, read_ros2_topic_list, read_teleop_configuration, read_robot_information
@@ -25,13 +28,62 @@ class RobotVisualizerNode(Node):
         self.signal_manager = signal_manager
         self.get_logger().info("Robot Visualizer Node started!")
 
-    def get_active_nodes(self):
-        return []
+        self.timestamps = {}
+        self.topic_list = read_ros2_topic_list().get('ros2_topic_list', []).split(' ')
+        for topic in self.topic_list:
+            topic_name = topic.split(",")[0]
+            self.timestamps[topic_name] = deque(maxlen=100)
 
-    def get_active_topics(self):
-        topic_list = subprocess.run(['ros2', 'topic', 'list'], stdout=subprocess.PIPE)
-        topic_list = topic_list.stdout.decode('utf-8').split('\n')
-        return topic_list
+        for topic in self.topic_list:
+            topic_name = topic.split(",")[0]
+            topic_type = topic.split(",")[1]
+            if topic_type == "std_msgs/msg/String":
+                topic_type = String
+            elif topic_type == "std_msgs/msg/Bool":
+                topic_type = Bool
+            elif topic_type == "sensor_msgs/msg/PointCloud2":
+                topic_type = PointCloud2
+            elif topic_type == "std_msgs/msg/Int16":
+                topic_type = Int16
+            elif topic_type == "std_msgs/msg/Float32":
+                topic_type = Float32
+
+            self.create_subscription(
+                topic_type,
+                topic_name,
+                lambda msg, t=topic_name: self.topic_callback(msg, t),
+                qos_profile_sensor_data, 
+                raw=True
+            )
+
+    def topic_callback(self, msg, topic_name):
+        now = self.get_clock().now()
+        self.timestamps[topic_name].append(now)
+
+    def get_active_nodes(self):
+        discovered_nodes = self.get_node_names_and_namespaces()
+        active_node_names = [name for (name, ns) in discovered_nodes]
+        print(active_node_names)
+        return active_node_names
+
+    def check_hz_rate(self, topic, timeout_s=2.0):
+        times = self.timestamps[topic]
+        if len(times) < 2:
+            return 0.0
+
+        now = self.get_clock().now()
+        last_time = times[-1]
+        time_since_last = (now - last_time).nanoseconds * 1e-9
+
+        if time_since_last > timeout_s:
+            return 0.0
+
+        total_time = (times[-1] - times[0]).nanoseconds * 1e-9
+        if total_time <= 0.0:
+            return 0.0
+        n_msgs = len(times)
+        hz = (n_msgs - 1) / total_time
+        return hz
 
     def get_active_motors(self):
         return []
@@ -59,10 +111,11 @@ class RobotVisualizerGUI(QMainWindow):
         self.topic_list = read_ros2_topic_list().get('ros2_topic_list', []).split(' ')
         self.topic_leds = {}
         for topic in self.topic_list:
-            self.topic_leds[topic] = StatusLed("")
-            self.topic_leds[topic].setFixedWidth(20)
-            self.topic_leds[topic].setDisabled(True)
-            self.topic_leds[topic].set_state(0)
+            topic_name = topic.split(",")[0]
+            self.topic_leds[topic_name] = StatusLed("")
+            self.topic_leds[topic_name].setFixedWidth(20)
+            self.topic_leds[topic_name].setDisabled(True)
+            self.topic_leds[topic_name].set_state(0)
         self.controllers = read_robot_information().get('controllers', [])
         self.controllers_leds = {}
         for controller_type in self.controllers:
@@ -179,17 +232,22 @@ class RobotVisualizerGUI(QMainWindow):
         self.nodes_content_layout.addWidget(nodes_grid_widget)
 
     def update_topics(self):
-        active_topics = self.node.get_active_topics()
         for i in reversed(range(self.topics_content_layout.count())):
             self.topics_content_layout.itemAt(i).widget().deleteLater()
         topics_grid_layout = QGridLayout()
 
         for index, topic in enumerate(self.topic_list):
-            self.topic_leds[topic].repaint_signal.emit(1 if topic in active_topics else 0)
+            topic = topic.split(",")[0]
+            hz = self.node.check_hz_rate(topic)
+            self.topic_leds[topic].repaint_signal.emit(1 if hz > 0 else 0)
             topic_label = QLabel(topic)
             topic_label.setAlignment(Qt.AlignLeft)
+            topic_hz_label = QLabel(f"{hz:.2f} Hz")
+            topic_hz_label.setFixedWidth(60)
+            topic_hz_label.setAlignment(Qt.AlignRight)
             topics_grid_layout.addWidget(self.topic_leds[topic], index, 0)
             topics_grid_layout.addWidget(topic_label, index, 1)
+            topics_grid_layout.addWidget(topic_hz_label, index, 2)
 
         topics_grid_widget = QWidget()
         topics_grid_widget.setLayout(topics_grid_layout)

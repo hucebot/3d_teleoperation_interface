@@ -1,10 +1,10 @@
 ros2_topic_list:
-  /power/battery_level
-  /power/is_charging
-  /power/is_docked
-  /power/is_emergency
-  /power/is_plugged
-  /power/time_emergency
-  /power_board
-  /power_status
-  /camera/depth_registered/points
+  /power/battery_level,std_msgs/msg/String
+  /power/is_charging,std_msgs/msg/String
+  /power/is_docked,std_msgs/msg/String
+  /power/is_emergency,std_msgs/msg/String
+  /power/is_plugged,std_msgs/msg/Bool
+  /power/time_emergency,std_msgs/msg/Bool
+  /power_board,std_msgs/msg/Bool
+  /power_status,std_msgs/msg/Bool
+  /camera/depth_registered/points,sensor_msgs/msg/PointCloud2
