@@ -9,3 +9,4 @@ ros2_node_list:
   streamdeck_controller
   insta360_controller
   screen_recording
+  screen_viewer

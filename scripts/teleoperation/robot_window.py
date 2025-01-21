@@ -10,7 +10,7 @@ import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.node import Node
 from std_msgs.msg import String, Bool, Int16, Float32
-from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud2, CompressedImage
 
 from ros2_3d_interface.common.darkstyle import dark_style
 from ros2_3d_interface.common.read_configuration import read_ros2_node_list, read_ros2_topic_list, read_teleop_configuration, read_robot_information
@@ -47,6 +47,8 @@ class RobotVisualizerNode(Node):
                 topic_type = Int16
             elif topic_type == "/Float32":
                 topic_type = Float32
+            elif topic_type == "/CompressedImage":
+                topic_type = CompressedImage
 
             self.create_subscription(
                 topic_type,

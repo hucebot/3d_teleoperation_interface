@@ -8,3 +8,5 @@ ros2_topic_list:
   /power_board,/Bool
   /power_status,/Bool
   /camera/depth_registered/points,/PointCloud2
+  /screen_recording/compressed,/CompressedImage
+  /camera/color/image_raw/compressed,/CompressedImage

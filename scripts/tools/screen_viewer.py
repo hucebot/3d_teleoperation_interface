@@ -1,17 +1,22 @@
 #!/usr/bin/env python3
+
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage
 import cv2
 import numpy as np
 
+from ros2_3d_interface.common.read_configuration import read_teleop_configuration
+
 class CompressedImageViewer(Node):
     def __init__(self):
-        super().__init__('compressed_image_viewer')
+        super().__init__('screen_viewer')
+
+        self.config_data = read_teleop_configuration()
         
         self.subscription = self.create_subscription(
             CompressedImage,
-            '/screen_recording/compressed',
+            self.config_data['screen_recording']['topic'],
             self.listener_callback,
             10
         )
@@ -25,7 +30,7 @@ class CompressedImageViewer(Node):
             cv2.imshow('Compressed Image', cv_image)
             cv2.waitKey(1)
         else:
-            self.get_logger().error("Error al decodificar la imagen")
+            self.get_logger().error("Error decoding image")
 
 def main(args=None):
     rclpy.init(args=args)

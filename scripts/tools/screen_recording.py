@@ -5,24 +5,26 @@ from rclpy.node import Node
 from sensor_msgs.msg import CompressedImage
 import numpy as np
 import cv2
-import mss  # Más rápido que PIL ImageGrab
-# from PIL import ImageGrab  # Puedes usar PIL si no deseas instalar mss
+import mss
 
-from ros2_3d_interface.common.read_configuration import read_teleop_configuration
+from ros2_3d_interface.common.read_configuration import read_teleop_configuration, read_3d_configuration
 
 
 class ScreenRecording(Node):
     def __init__(self):
-        super().__init__('screen_recording_compressed')
+        super().__init__('screen_recording')
         self.config_data = read_teleop_configuration()
+        self.config_3d_data = read_3d_configuration()
 
-        self.screen_publisher = self.create_publisher(CompressedImage, '/screen_recording/compressed', 10)
+        self.screen_publisher = self.create_publisher(CompressedImage, self.config_data['screen_recording']['topic'], 10)
 
         fps = self.config_data['screen_recording']['fps']
         self.timer = self.create_timer(1.0/fps, self.timer_screen_cb)
 
-        self.width = self.config_data['screen_recording']['width']
-        self.height = self.config_data['screen_recording']['height']
+        self.x = self.config_3d_data['main_window']['x']
+        self.y = self.config_3d_data['main_window']['y']
+        self.width = self.config_3d_data['main_window']['width']
+        self.height = self.config_3d_data['main_window']['height']
 
         self.monitor = {
             "top": 0,
@@ -39,7 +41,7 @@ class ScreenRecording(Node):
         encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 80]
         success, encoded_img = cv2.imencode('.jpg', img_bgr, encode_param)
         if not success:
-            self.get_logger().error("Error al comprimir la imagen")
+            self.get_logger().error("Error encoding image")
             return
 
         compressed_msg = CompressedImage()
