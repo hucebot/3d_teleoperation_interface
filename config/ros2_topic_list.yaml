@@ -7,3 +7,4 @@ ros2_topic_list:
   /power/time_emergency
   /power_board
   /power_status
+  /camera/depth_registered/points

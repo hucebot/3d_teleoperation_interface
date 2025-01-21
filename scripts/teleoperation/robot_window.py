@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import sys
-import threading
+import sys, threading, subprocess, os
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QHBoxLayout, QWidget, QScrollArea, QGridLayout
 from PySide6.QtCore import Qt, QTimer, Signal, QObject
@@ -27,10 +26,12 @@ class RobotVisualizerNode(Node):
         self.get_logger().info("Robot Visualizer Node started!")
 
     def get_active_nodes(self):
-        return self.get_node_names()
+        return []
 
     def get_active_topics(self):
-        return [topic[0] for topic in self.get_topic_names_and_types()]
+        topic_list = subprocess.run(['ros2', 'topic', 'list'], stdout=subprocess.PIPE)
+        topic_list = topic_list.stdout.decode('utf-8').split('\n')
+        return topic_list
 
     def get_active_motors(self):
         return []
@@ -49,9 +50,37 @@ class RobotVisualizerGUI(QMainWindow):
                          self.config_file['teleop_window']['window_width'], self.config_file['teleop_window']['window_height'])
 
         self.node_list = read_ros2_node_list().get('ros2_node_list', []).split(' ')
+        self.node_leds = {}
+        for node in self.node_list:
+            self.node_leds[node] = StatusLed("")
+            self.node_leds[node].setFixedWidth(20)
+            self.node_leds[node].setDisabled(True)
+            self.node_leds[node].set_state(0)
         self.topic_list = read_ros2_topic_list().get('ros2_topic_list', []).split(' ')
+        self.topic_leds = {}
+        for topic in self.topic_list:
+            self.topic_leds[topic] = StatusLed("")
+            self.topic_leds[topic].setFixedWidth(20)
+            self.topic_leds[topic].setDisabled(True)
+            self.topic_leds[topic].set_state(0)
         self.controllers = read_robot_information().get('controllers', [])
+        self.controllers_leds = {}
+        for controller_type in self.controllers:
+            self.controllers_leds[controller_type] = {}
+            for controller in self.controllers[controller_type].split(' '):
+                self.controllers_leds[controller_type][controller] = StatusLed("")
+                self.controllers_leds[controller_type][controller].setFixedWidth(20)
+                self.controllers_leds[controller_type][controller].setDisabled(True)
+                self.controllers_leds[controller_type][controller].set_state(0)
         self.motors = read_robot_information().get('motors', [])
+        self.motors_leds = {}
+        for motor_type in self.motors:
+            self.motors_leds[motor_type] = {}
+            for motor in self.motors[motor_type].split(' '):
+                self.motors_leds[motor_type][motor] = StatusLed("")
+                self.motors_leds[motor_type][motor].setFixedWidth(20)
+                self.motors_leds[motor_type][motor].setDisabled(True)
+                self.motors_leds[motor_type][motor].set_state(0)
 
         # Labels
         self.robot_info_label = QLabel("Robot Information")
@@ -134,42 +163,39 @@ class RobotVisualizerGUI(QMainWindow):
 
         self.update_columns()
 
-    def update_columns(self):
-        # Update nodes
+    def update_nodes(self):
         active_nodes = self.node.get_active_nodes()
         for i in reversed(range(self.nodes_content_layout.count())):
             self.nodes_content_layout.itemAt(i).widget().deleteLater()
         nodes_grid_layout = QGridLayout()
         for index, node in enumerate(self.node_list):
-            node_led = StatusLed("")
-            node_led.setFixedWidth(20)
-            node_led.set_state(1 if node in active_nodes else 0)
+            self.node_leds[node].repaint_signal.emit(1 if node in active_nodes else 0)
             node_label = QLabel(node)
             node_label.setAlignment(Qt.AlignLeft)
-            nodes_grid_layout.addWidget(node_led, index, 0)
+            nodes_grid_layout.addWidget(self.node_leds[node], index, 0)
             nodes_grid_layout.addWidget(node_label, index, 1)
         nodes_grid_widget = QWidget()
         nodes_grid_widget.setLayout(nodes_grid_layout)
         self.nodes_content_layout.addWidget(nodes_grid_widget)
 
-        # Update topics
+    def update_topics(self):
         active_topics = self.node.get_active_topics()
         for i in reversed(range(self.topics_content_layout.count())):
             self.topics_content_layout.itemAt(i).widget().deleteLater()
         topics_grid_layout = QGridLayout()
+
         for index, topic in enumerate(self.topic_list):
-            topic_led = StatusLed("")
-            topic_led.setFixedWidth(20)
-            topic_led.set_state(1 if topic in active_topics else 0)
+            self.topic_leds[topic].repaint_signal.emit(1 if topic in active_topics else 0)
             topic_label = QLabel(topic)
             topic_label.setAlignment(Qt.AlignLeft)
-            topics_grid_layout.addWidget(topic_led, index, 0)
+            topics_grid_layout.addWidget(self.topic_leds[topic], index, 0)
             topics_grid_layout.addWidget(topic_label, index, 1)
+
         topics_grid_widget = QWidget()
         topics_grid_widget.setLayout(topics_grid_layout)
         self.topics_content_layout.addWidget(topics_grid_widget)
 
-
+    def update_controllers(self):
         active_controllers = self.node.get_active_controllers()
         for i in reversed(range(self.controllers_content.count())):
             if i == 0:
@@ -188,13 +214,11 @@ class RobotVisualizerGUI(QMainWindow):
             self.controllers_content.addWidget(controller_label)
             row_index = 0
             for controller in self.controllers[controller_type].split(' '):
-                controller_led = StatusLed("")
-                controller_led.setFixedWidth(20)
-                topic_led.set_state(1 if controller in active_controllers else 0)
+                self.controllers_leds[controller_type][controller].repaint_signal.emit(1 if controller in active_controllers else 0)
                 controller_label = QLabel(controller)
                 controller_label.setAlignment(Qt.AlignTop)
                 controller_label.setAlignment(Qt.AlignLeft)
-                controller_grid_layout.addWidget(controller_led, row_index, 0)
+                controller_grid_layout.addWidget(self.controllers_leds[controller_type][controller], row_index, 0)
                 controller_grid_layout.addWidget(controller_label, row_index, 1)
                 row_index += 1
 
@@ -203,6 +227,8 @@ class RobotVisualizerGUI(QMainWindow):
 
             self.controllers_content.addWidget(controller_grid_widget)
 
+    def update_motors(self):
+        active_motors = self.node.get_active_motors()
         for i in reversed(range(self.motors_content.count())):
             if i == 0:
                 pass
@@ -219,12 +245,10 @@ class RobotVisualizerGUI(QMainWindow):
             self.motors_content.addWidget(motor_label)
             row_index = 0
             for motor in self.motors[motor_type].split(' '):
-                motor_led = StatusLed("")
-                motor_led.setFixedWidth(20)
-                motor_led.set_state(1 if motor in active_controllers else 0)
+                self.motors_leds[motor_type][motor].repaint_signal.emit(1 if motor in active_motors else 0)
                 motor_label = QLabel(motor)
                 motor_label.setAlignment(Qt.AlignLeft)
-                motor_grid_layout.addWidget(motor_led, row_index, 0)
+                motor_grid_layout.addWidget(self.motors_leds[motor_type][motor], row_index, 0)
                 motor_grid_layout.addWidget(motor_label, row_index, 1)
                 row_index += 1
 
@@ -233,7 +257,12 @@ class RobotVisualizerGUI(QMainWindow):
 
             self.motors_content.addWidget(motor_grid_widget)
 
-
+    def update_columns(self):
+        # Update nodes
+        self.update_nodes()
+        self.update_topics()
+        self.update_controllers()
+        self.update_motors()
 
 
 def main(args=None):
