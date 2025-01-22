@@ -87,4 +87,6 @@ point_cloud:
   topic: "/camera/depth_registered/points" 
 
 trajectory:
+  total_trajectories: 40
+  total_points_per_trajectory: 16
   topic: "/trajectory_points"

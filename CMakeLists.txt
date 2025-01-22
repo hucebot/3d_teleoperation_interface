@@ -12,12 +12,6 @@ find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclpy REQUIRED)
-find_package(PCL REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
-find_package(pcl_conversions REQUIRED)
-find_package(visualization_msgs REQUIRED)
-find_package(pcl_msgs REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
@@ -25,23 +19,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 include_directories(include)
 
-add_executable(publish_trajectory src/trajectory.cpp)
-add_executable(verify_line_of_sight src/verify_line_of_sight.cpp)
-
-ament_target_dependencies(publish_trajectory rclcpp visualization_msgs)
-
-ament_target_dependencies(
-  verify_line_of_sight
-  rclcpp
-  sensor_msgs
-  std_msgs
-  pcl_conversions
-  visualization_msgs
-)
-
 install(TARGETS
-  publish_trajectory
-  verify_line_of_sight
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -49,9 +27,11 @@ ament_python_install_package(${PROJECT_NAME})
 
 install(PROGRAMS
   scripts/3d_interface/3d_viewer.py
+  
   scripts/tools/streamdeck.py
   scripts/tools/trajectory_bridge.py
   scripts/tools/screen_recording.py
+  scripts/tools/dummy_trajectory.py
 
   scripts/teleoperation/network_window.py
   scripts/teleoperation/robot_window.py
