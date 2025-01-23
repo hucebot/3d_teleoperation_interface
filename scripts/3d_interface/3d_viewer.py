@@ -6,8 +6,7 @@ import numpy as np
 
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, Image
-from visualization_msgs.msg import MarkerArray
-from std_msgs.msg import String
+from std_msgs.msg import Float64MultiArray, String
 
 from rclpy.qos import qos_profile_sensor_data
 
@@ -103,6 +102,9 @@ class PointCloudViewerNode(Node):
 
         self.robot_model = config_file['robot']['model']
         self.robot_version = config_file['robot']['version']
+
+        self.total_trajectories = config_file['trajectory']['total_trajectories']
+        self.number_of_points = 1
         
 
         self.array_frames_xyz = np.zeros((self.size_points, 3), dtype=np.float32)
@@ -151,6 +153,7 @@ class PointCloudViewerNode(Node):
         self.actual_image = np.zeros((self.rgb_image_height, self.rgb_image_width, 3), dtype=np.uint8)
 
         self.trajectory_points = []
+        self.trajectories_shapes = []
         self.trajectory = None
 
 
@@ -162,7 +165,7 @@ class PointCloudViewerNode(Node):
         )
 
         self.create_subscription(
-            MarkerArray,
+            Float64MultiArray,
             self.trajectory_points_topic,
             self.trajectory_cb,
             10
@@ -214,20 +217,35 @@ class PointCloudViewerNode(Node):
 
     def trajectory_cb(self, msg):
         """
-        Callback for receiving trajectory points as MarkerArray.
+        Callback for receiving trajectory data.
 
         Args:
-            msg (visualization_msgs.msg.MarkerArray): The incoming trajectory points.
+            msg (std_msgs.msg.Float64MultiArray): The incoming trajectory message.
 
-        This function extracts the trajectory points from the message and updates the `ShapeTrajectory`
-        object for rendering in the viewer.
+        This function extracts trajectory points from the message and updates the trajectory shapes
+        used for rendering in the 3D viewer.
         """
 
+        float_data = msg.data
+        np_data = np.array(float_data, dtype=np.float32)
+        
+        total_floats = len(np_data)
+        num_points = total_floats // (self.total_trajectories * 3)
 
-        self.trajectory_points = []
-        for marker in msg.markers:
-            self.trajectory_points.append([marker.pose.position.x, marker.pose.position.y, marker.pose.position.z]) 
-        self.trajectory = ShapeTrajectory(self.ctx, self.trajectory_points, color=[0.0, 1.0, 0.0, 0.5])
+        if total_floats != num_points * self.total_trajectories * 3:
+            self.get_logger().error("Invalid number of points in trajectory"
+            )
+            return
+
+        reshaped = np_data.reshape(self.total_trajectories, num_points, 3)
+        self.trajectories_shapes = []
+
+        for i in range(self.total_trajectories):
+            traj_points = reshaped[i]
+            shape_traj = ShapeTrajectory(self.ctx, traj_points.tolist(), color=[0.0, 1.0, 0.0, 0.1])
+            self.trajectories_shapes.append(shape_traj)
+
+
 
     def pointcloud_cb(self, msg):
         """
@@ -269,36 +287,23 @@ class PointCloudViewerNode(Node):
         except Exception as e:
             self.get_logger().error("Error processing pointcloud: %s" % str(e))
 
-    def draw_scene(self, camera, render_trajectory = True):
+    def draw_scene(self, camera, render_trajectory=True):
         try:
-            self.grid.render(
-                cam=camera
-            )
-            self.frame.render(
-                cam=camera,
-                pos=[0.0, 0.0, -1.0],
-                rot=RotIdentity(),
-                scale=0.3
-            )
+            self.grid.render(cam=camera)
+            self.frame.render(cam=camera, pos=[0.0, 0.0, -1.0], rot=RotIdentity(), scale=0.3)
 
-            if self.trajectory is not None and render_trajectory:
-                self.trajectory.render(cam=camera)
+            if render_trajectory and len(self.trajectories_shapes) > 0:
+                for shape_traj in self.trajectories_shapes:
+                    shape_traj.render(cam=camera)
 
-            self.cloud.render(
-                cam=camera,
-                pos=[0.0, 0.0, 0.0],
-                rot=RotIdentity(),
-                scale=1.0
-            )
+            self.cloud.render(cam=camera, pos=[0.0, 0.0, 0.0], rot=RotIdentity(), scale=1.0)
 
             if self.render_image:
-                self.image.update_texture(
-                    self.actual_image)
-
+                self.image.update_texture(self.actual_image)
                 self.image.render(
-                    cam=camera, 
+                    cam=camera,
                     pos=[self.visualizer_x, self.visualizer_y, self.visualizer_z],
-                    rot=RotIdentity(), 
+                    rot=RotIdentity(),
                     size=[self.visualizer_width, self.visualizer_height]
                 )
 
@@ -314,7 +319,8 @@ class PointCloudViewerNode(Node):
                 )
 
         except Exception as e:
-            self.get_logger().error("Error updating frontal viewer: %s" % str(e))
+            self.get_logger().error("Error updating viewer scene: %s" % str(e))
+
 
     def update(self, dt):
         """
