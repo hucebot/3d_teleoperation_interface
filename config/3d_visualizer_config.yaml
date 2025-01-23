@@ -37,12 +37,12 @@ viewports:
     width: 600
     height: 400
     camera:
-      x_origin: 0.8
+      x_origin: 1.0
       y_origin: 1.0
-      z_origin: 0.5
-      x_target: 0.8
-      y_target: 0.0
-      z_target: 0.0
+      z_origin: 0.2
+      x_target: 1.0
+      y_target: 0.5
+      z_target: 0.3
 
   upper:
     use: true
@@ -87,6 +87,7 @@ point_cloud:
   topic: "/camera/depth_registered/points" 
 
 trajectory:
-  total_trajectories: 40
-  total_points_per_trajectory: 16
+  total_trajectories: 10
+  update_rate : 0.1
+  number_of_points_per_trajectory: 16
   topic: "/trajectory_points"

@@ -6,8 +6,7 @@ import numpy as np
 
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, Image
-from std_msgs.msg import Float64MultiArray
-from std_msgs.msg import String
+from std_msgs.msg import Float64MultiArray, String
 
 from rclpy.qos import qos_profile_sensor_data
 
@@ -105,7 +104,7 @@ class PointCloudViewerNode(Node):
         self.robot_version = config_file['robot']['version']
 
         self.total_trajectories = config_file['trajectory']['total_trajectories']
-        self.number_of_points = config_file['trajectory']['total_points_per_trajectory']
+        self.number_of_points = 1
         
 
         self.array_frames_xyz = np.zeros((self.size_points, 3), dtype=np.float32)
@@ -218,27 +217,35 @@ class PointCloudViewerNode(Node):
 
     def trajectory_cb(self, msg):
         """
-        Callback for receiving trajectory points as MarkerArray.
+        Callback for receiving trajectory data.
 
         Args:
-            msg (visualization_msgs.msg.MarkerArray): The incoming trajectory points.
+            msg (std_msgs.msg.Float64MultiArray): The incoming trajectory message.
 
-        This function extracts the trajectory points from the message and updates the `ShapeTrajectory`
-        object for rendering in the viewer.
+        This function extracts trajectory points from the message and updates the trajectory shapes
+        used for rendering in the 3D viewer.
         """
 
         float_data = msg.data
         np_data = np.array(float_data, dtype=np.float32)
+        
+        total_floats = len(np_data)
+        num_points = total_floats // (self.total_trajectories * 3)
 
-        reshaped = np_data.reshape(self.total_trajectories, self.number_of_points, 3)
+        if total_floats != num_points * self.total_trajectories * 3:
+            self.get_logger().error("Invalid number of points in trajectory"
+            )
+            return
 
+        reshaped = np_data.reshape(self.total_trajectories, num_points, 3)
         self.trajectories_shapes = []
 
         for i in range(self.total_trajectories):
-            traj_points = reshaped[i] 
-            traj_points_list = traj_points.tolist()
-            shape_traj = ShapeTrajectory(self.ctx, traj_points_list, color=[0.0, 1.0, 0.0, 0.5])
+            traj_points = reshaped[i]
+            shape_traj = ShapeTrajectory(self.ctx, traj_points.tolist(), color=[0.0, 1.0, 0.0, 0.1])
             self.trajectories_shapes.append(shape_traj)
+
+
 
     def pointcloud_cb(self, msg):
         """

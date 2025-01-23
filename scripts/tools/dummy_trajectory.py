@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 
-import rclpy
-from rclpy.node import Node
-
 import math
 import random
+import time
 
-from std_msgs.msg import Float64MultiArray, MultiArrayLayout, MultiArrayDimension
-
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import Float64MultiArray, MultiArrayLayout, MultiArrayDimension, Int16
+from ros2_3d_interface.common.read_configuration import read_3d_configuration
 
 class TrajectoryNode(Node):
     def __init__(self):
         super().__init__('trajectory_node')
         self.get_logger().info('Iniciando TrajectoryNode en Python...')
 
-        self.total_trajectories = 40
-        self.number_of_points = 16
+        self.config_file = read_3d_configuration()
+
+        self.total_trajectories = self.config_file['trajectory']['total_trajectories']
+        self.update_period = self.config_file['trajectory']['update_rate']
+        self.number_of_points = self.config_file['trajectory']['number_of_points_per_trajectory']
+        self.topic = self.config_file['trajectory']['topic']
 
         self.base_trajectory = [
             (0.0, 0.5, 0.0),
@@ -38,16 +42,16 @@ class TrajectoryNode(Node):
 
         self.base_trajectory = [(x / 10, y / 10, z / 10) for (x, y, z) in self.base_trajectory]
 
+        self.current_step = 1
 
-        self.publisher_ = self.create_publisher(Float64MultiArray, '/trajectory_points', 10)
+        self.trajectories = self.generate_trajectories(self.total_trajectories)
 
-        period = 0.5
+        self.trajectories_publisher = self.create_publisher(Float64MultiArray, self.topic, 10)
 
-        self.timer_ = self.create_timer(period, self.publish_trajectories)
+        self.timer = self.create_timer(self.update_period, self.publish_incremental_trajectories)
 
     def generate_trajectories(self, num_trajectories: int):
         trajectories = []
-
         for _ in range(num_trajectories):
             random_traj = []
 
@@ -70,24 +74,29 @@ class TrajectoryNode(Node):
 
                 random_traj.append((nx, ny, nz))
 
-            for point in random_traj:
-                trajectories.extend(point)
+            trajectories.append(random_traj)
 
         return trajectories
 
-    def publish_trajectories(self):
-        data = self.generate_trajectories(self.total_trajectories)
+    def publish_incremental_trajectories(self):
+        data = []
+        for trajectory in self.trajectories:
+            data.extend(trajectory[:self.current_step])
 
         multi_array = Float64MultiArray()
         multi_array.layout = MultiArrayLayout()
         multi_array.layout.dim = [
             MultiArrayDimension(label='trajectories', size=self.total_trajectories, stride=len(data)),
-            MultiArrayDimension(label='points', size=self.number_of_points, stride=self.number_of_points * 3),
+            MultiArrayDimension(label='points', size=min(self.current_step, self.number_of_points), stride=3),
             MultiArrayDimension(label='xyz', size=3, stride=3),
         ]
-        multi_array.data = data
+        multi_array.data = [coord for point in data for coord in point]
 
-        self.publisher_.publish(multi_array)
+        self.trajectories_publisher.publish(multi_array)
+
+        self.current_step += 1
+        if self.current_step > self.number_of_points:
+            self.current_step = 1
 
 
 def main(args=None):
