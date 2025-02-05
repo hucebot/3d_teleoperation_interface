@@ -20,6 +20,9 @@ def generate_nodes(config_3d_file, general_config_file):
     # General parameters
     use_streamdeck = general_config_file['general']['use_streamdeck']
     reset_view_topic = config_3d_file['streamdeck']['reset_view_topic']
+    use_robot_window = general_config_file['general']['use_robot_window']
+    use_network_window = general_config_file['general']['use_network_window']
+    use_stream_window = general_config_file['general']['use_stream_window']
 
     # Trajectory parameters
     trajectory_points_topic = config_3d_file['trajectory']['topic']
@@ -55,10 +58,52 @@ def generate_nodes(config_3d_file, general_config_file):
 
         node_list.append(streamdeck_node)
 
+    if use_robot_window:
+        robot_window_node = Node(
+            package='ros2_3d_interface',
+            executable='robot_window.py',
+            name='robot_window',
+            output='screen',
+            parameters=[
+                {
+                }
+            ]
+        )
+
+        node_list.append(robot_window_node)
+
+    if use_network_window:
+        network_window_node = Node(
+            package='ros2_3d_interface',
+            executable='network_window.py',
+            name='network_window',
+            output='screen',
+            parameters=[
+                {
+                }
+            ]
+        )
+
+        node_list.append(network_window_node)
+
+    if use_stream_window:
+        stream_window_node = Node(
+            package='ros2_3d_interface',
+            executable='stream_window.py',
+            name='stream_window',
+            output='screen',
+            parameters=[
+                {
+                }
+            ]
+        )
+
+        node_list.append(stream_window_node)
+
     if use_dummy_trajectory:
         dummy_trajectory_node = Node(
             package='ros2_3d_interface',
-            executable='publish_trajectory',
+            executable='dummy_trajectory.py',
             name='dummy_trajectory',
             output='screen',
             parameters=[

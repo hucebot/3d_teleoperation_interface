@@ -1,6 +1,6 @@
 
 main_window:
-  name: "3D Perspective"
+  name: '3D Perspective'
   resizable: true
   x: 0
   y: 0
@@ -8,6 +8,7 @@ main_window:
   height: 800
   render_hz: 60
   camera_velocity: 0.1
+  compressed_image_topic: 'ros2_3d_interface/3d_viewer/image_compressed'
 
 rendering:
   pyramid: false
@@ -63,7 +64,7 @@ robot:
   version: 'with_hand'
 
 streamdeck:
-  reset_view_topic: "/streamdeck/reset_view"
+  reset_view_topic: '/streamdeck/reset_view'
 
 rgb_image:
   visualizer:
@@ -75,7 +76,7 @@ rgb_image:
   rgb_image_width: 1280
   width: 1280
   height: 720
-  topic: "/camera/color/image_raw"
+  topic: '/camera/color/image_raw'
 
 point_cloud:
   width: 640
@@ -84,10 +85,10 @@ point_cloud:
   point_size: 1
   hfov: 100
   vfov: 100
-  topic: "/camera/depth_registered/points" 
+  topic: '/camera/depth_registered/points' 
 
 trajectory:
   total_trajectories: 10
   update_rate : 0.1
   number_of_points_per_trajectory: 16
-  topic: "/trajectory_points"
+  topic: '/trajectory_points'

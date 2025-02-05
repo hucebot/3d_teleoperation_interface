@@ -1,3 +1,7 @@
 general:
+    use_local_screen: false
     use_streamdeck: true
     use_dummy_trajectory: true
+    use_robot_window: true
+    use_network_window: false
+    use_stream_window: true

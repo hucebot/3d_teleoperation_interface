@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import moderngl, rclpy, pyglet
+import moderngl, rclpy, pyglet, cv2
 
 import numpy as np
 
 from rclpy.node import Node
-from sensor_msgs.msg import PointCloud2, Image
+from sensor_msgs.msg import PointCloud2, Image, CompressedImage
 from std_msgs.msg import Float64MultiArray, String
 
 from rclpy.qos import qos_profile_sensor_data
@@ -31,7 +31,7 @@ class PointCloudViewerNode(Node):
     ROS 2 Node for visualizing point clouds, trajectory markers, and RGB images in a 3D viewer.
     """
 
-    def __init__(self, config_file):
+    def __init__(self, config_file, general_config):
         super().__init__('pointcloud_viewer')
 
         self.title = config_file['main_window']['name']
@@ -39,6 +39,8 @@ class PointCloudViewerNode(Node):
         self.screen_height = config_file['main_window']['height']
         self.render_hz = config_file['main_window']['render_hz']
         self.camera_velocity = config_file['main_window']['camera_velocity']
+        self.compressed_image_topic = config_file['main_window']['compressed_image_topic']
+        self.use_local_screen = general_config['general']['use_local_screen']
 
         self.frontal_view_x = config_file['viewports']['frontal']['x']
         self.frontal_view_y = config_file['viewports']['frontal']['y']
@@ -129,18 +131,27 @@ class PointCloudViewerNode(Node):
         self.side_camera.setParams(self.hfov, self.vfov, (0, 0, self.screen_width, self.screen_height))
         self.side_camera.setTargetPos([self.side_camera_x_target, self.side_camera_y_target, self.side_camera_z_target])
         self.side_camera.setEyePos([self.side_camera_x, self.side_camera_y, self.side_camera_z])
+        
+        self.ctx = moderngl.create_context()
 
-        self.viewer = Viewer(
-            screen_width=self.screen_width, 
-            screen_height=self.screen_height, 
-            cam=self.frontal_camera, 
-            title=self.title,
-            cam_velocity=self.camera_velocity
-        )
+        if self.use_local_screen:
+
+            self.viewer = Viewer(
+                screen_width=self.screen_width, 
+                screen_height=self.screen_height, 
+                cam=self.frontal_camera, 
+                title=self.title,
+                cam_velocity=self.camera_velocity
+            )
+
+            self.ctx = self.viewer.ctx
+        else:
+            self.viewer = None
+            self.ctx = moderngl.create_standalone_context(require=330)
 
         self.view_type = ''
 
-        self.ctx = moderngl.create_context()
+        
         self.ctx.enable(moderngl.BLEND | moderngl.DEPTH_TEST)
         self.ctx.enable(moderngl.PROGRAM_POINT_SIZE)
 
@@ -156,6 +167,7 @@ class PointCloudViewerNode(Node):
         self.trajectories_shapes = []
         self.trajectory = None
 
+        self.viewer_image_publisher = self.create_publisher(CompressedImage, self.compressed_image_topic, 10)
 
         self.create_subscription(
             PointCloud2,
@@ -242,7 +254,7 @@ class PointCloudViewerNode(Node):
 
         for i in range(self.total_trajectories):
             traj_points = reshaped[i]
-            shape_traj = ShapeTrajectory(self.ctx, traj_points.tolist(), color=[0.0, 1.0, 0.0, 0.1])
+            shape_traj = ShapeTrajectory(self.ctx, traj_points.tolist(), color=[0.0, 1.0, 0.0, 0.4])
             self.trajectories_shapes.append(shape_traj)
 
 
@@ -365,13 +377,27 @@ class PointCloudViewerNode(Node):
         )
         self.draw_scene(self.upper_camera, render_trajectory = True)
 
+        if not self.use_local_screen:
+            frame_data = self.ctx.screen.read(components=3, alignment=1)
+            np_image = np.frombuffer(frame_data, dtype=np.uint8).reshape(
+                (self.screen_height, self.screen_width, 3)
+            )
+
+            ret, buffer = cv2.imencode('.jpg', np_image)
+            if ret:
+                msg = CompressedImage()
+                msg.header.stamp = self.get_clock().now().to_msg()
+                msg.format = "jpeg"
+                msg.data = np.array(buffer).tobytes()
+                self.viewer_image_publisher.publish(msg)
+
     def spin_once(self):
         rclpy.spin_once(self, timeout_sec=0.01)
 
 
 def main(args=None):    
     rclpy.init(args=args)
-    node = PointCloudViewerNode(config_file=read_3d_configuration())
+    node = PointCloudViewerNode(config_file=read_3d_configuration(), general_config = read_general_configuration())
 
     pyglet.clock.schedule_interval(lambda dt: node.spin_once(), 1 / 60)
     pyglet.clock.schedule_interval(node.update, 1 / 60)

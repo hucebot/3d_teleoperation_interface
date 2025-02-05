@@ -56,9 +56,9 @@ class TrajectoryNode(Node):
             random_traj = []
 
             for (bx, by, bz) in self.base_trajectory:
-                dx = random.uniform(-1.0, 1.0)
-                dy = random.uniform(-1.0, 1.0)
-                dz = random.uniform(-1.0, 1.0)
+                dx = random.uniform(-20.0, 20.0)
+                dy = random.uniform(-20.0, 20.0)
+                dz = random.uniform(-20.0, 20.0)
 
                 length = math.sqrt(dx * dx + dy * dy + dz * dz)
                 if length > 1e-9:
