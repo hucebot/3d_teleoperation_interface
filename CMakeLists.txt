@@ -32,6 +32,7 @@ install(PROGRAMS
   scripts/tools/trajectory_bridge.py
   scripts/tools/screen_recording.py
   scripts/tools/dummy_trajectory.py
+  scripts/tools/screen_viewer.py
 
   scripts/teleoperation/network_window.py
   scripts/teleoperation/robot_window.py

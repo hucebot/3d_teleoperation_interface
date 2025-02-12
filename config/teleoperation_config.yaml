@@ -20,7 +20,7 @@ screen_recording:
   width: 1600
   height: 800
   fps: 60
-  topic: /screen_recording/compressed
+  topic: ros2_3d_interface/viewer_3d/image_compressed
 
 wifi_plots:
   window_title: Network Status Window

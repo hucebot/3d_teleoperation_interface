@@ -8,7 +8,7 @@ main_window:
   height: 800
   render_hz: 60
   camera_velocity: 0.1
-  compressed_image_topic: 'ros2_3d_interface/3d_viewer/image_compressed'
+  compressed_image_topic: 'ros2_3d_interface/viewer_3d/image_compressed'
 
 rendering:
   pyramid: false
