@@ -2,3 +2,7 @@ ros2_topic_list:
   /camera/depth_registered/points,/PointCloud2
   /screen_recording/compressed,/CompressedImage
   /camera/color/image_raw/compressed,/CompressedImage
+  /dxl_input/gripper_right,/PoseStamped
+  /dxl_input/pos_right,/PointStamped
+  /dxl_input/gripper_left,/PoseStamped
+  /dxl_input/pos_left,/PointStamped

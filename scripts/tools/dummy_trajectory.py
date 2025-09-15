@@ -12,7 +12,7 @@ from ros2_3d_interface.common.read_configuration import read_3d_configuration
 class TrajectoryNode(Node):
     def __init__(self):
         super().__init__('trajectory_node')
-        self.get_logger().info('Iniciando TrajectoryNode en Python...')
+        self.get_logger().info('Initializing TrajectoryNode en Python...')
 
         self.config_file = read_3d_configuration()
 
